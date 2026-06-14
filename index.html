@@ -123,23 +123,7 @@
         }
         .status-indicator { -webkit-user-select: none; user-select: none; }
         .editable-name { -webkit-user-select: none; user-select: none; }
-        .edit-btn {
-            display: none;
-            background: #3498db;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            margin-left: 6px;
-            touch-action: manipulation;
-            vertical-align: middle;
-        }
-        .edit-btn:active { background: #2980b9; }
-        .editable-name:hover .edit-btn { display: inline; }
         @media (hover: none) and (pointer: coarse) {
-            .edit-btn { display: inline; }
             .editable-name:hover { background: transparent; }
             .status-indicator { width: 38px; height: 38px; font-size: 16px; }
             .status-indicator:active { transform: scale(0.9); }
@@ -420,10 +404,10 @@
 
         tr[style*="opacity"] { opacity: var(--reserve-opacity) !important; }
 
-        .svg-icon { width: 72px; height: 72px; vertical-align: middle; display: inline-block; filter: saturate(1.3) contrast(1.15); }
-        .col-icon-emoji { filter: saturate(1.3) contrast(1.15); }
-        .col-icon-reserve { filter: saturate(1.3) contrast(1.15); }
-        .status-indicator { filter: saturate(1.3) contrast(1.15); }
+        .svg-icon { width: 72px; height: 72px; vertical-align: middle; display: inline-block; filter: saturate(1.15) contrast(1.1); }
+        .col-icon-emoji { filter: saturate(1.15) contrast(1.1); }
+        .col-icon-reserve { filter: saturate(1.15) contrast(1.1); }
+        .status-indicator { filter: saturate(1.15) contrast(1.1); }
 
         .search-highlight { background: #fef08a; padding: 1px 3px; border-radius: 2px; }
         [data-theme="dark"] .search-highlight { background: #7c6a1a; color: #e2e8f0; }
@@ -940,23 +924,15 @@ function saveName(input) {
 // On touch devices: tap on name shows edit button, tap on edit button opens editor
 // On desktop: double-click opens editor
 document.addEventListener('DOMContentLoaded', function() {
-    // Add edit buttons to all editable names
-    document.querySelectorAll('.editable-name').forEach(function(el) {
-        var btn = document.createElement('button');
-        btn.className = 'edit-btn';
-        btn.textContent = '✎';
-        btn.setAttribute('onclick', 'event.stopPropagation(); editName(this.parentNode);');
-        el.appendChild(btn);
-
-        // On touch devices, single tap opens editor
-        if (isTouchDevice) {
+    // On touch devices, single tap opens editor
+    if (isTouchDevice) {
+        document.querySelectorAll('.editable-name').forEach(function(el) {
             el.addEventListener('click', function(e) {
-                if (e.target.classList.contains('edit-btn')) return;
                 if (this.classList.contains('editing')) return;
                 editName(this);
             });
-        }
-    });
+        });
+    }
 
     // Add touchstart handler for status indicators (iOS needs this)
     document.querySelectorAll('.status-indicator').forEach(function(el) {
