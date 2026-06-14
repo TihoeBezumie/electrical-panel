@@ -18,7 +18,23 @@
     // ===== Версия приложения =====
     // Меняй APP_VERSION каждый раз, когда меняешь структуру HTML (добавляешь/удаляешь строки, таблицы, секции).
     // Это заставит браузер сбросить сохранённое состояние (localStorage) и начать с чистого листа.
-    var APP_VERSION = '2.1';
+    var APP_VERSION = '2.2';
+    // ===== Принудительный сброс кэша GitHub Pages =====
+    // GitHub Pages кэширует HTML на своих CDN-серверах, и мета-теги no-cache не помогают.
+    // Решение: при смене версии делаем редирект на себя с параметром ?v=ВЕРСИЯ,
+    // что заставляет браузер загрузить свежий файл с GitHub.
+    (function() {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlVersion = urlParams.get('v');
+            if (urlVersion !== APP_VERSION) {
+                // Редирект на себя с параметром версии — браузер загрузит новый файл
+                var newUrl = window.location.pathname + '?v=' + APP_VERSION + window.location.hash;
+                window.location.replace(newUrl);
+                return;
+            }
+        } catch(e) {}
+    })();
     // ===== Принудительный сброс localStorage при смене версии =====
     // Если версия в коде не совпадает с сохранённой — стираем всё и начинаем заново.
     // Это решает проблему, когда браузер закэшировал старый JS с битыми данными.
