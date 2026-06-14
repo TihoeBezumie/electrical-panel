@@ -14,7 +14,19 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
+    // ===== Firebase =====
+    var firebaseConfig = {
+        databaseURL: "https://shilds-646d8-default-rtdb.firebaseio.com/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+    var syncRef = db.ref('panelState');
+    var isSyncing = false; // флаг, чтобы не зациклиться
+
     // ===== Версия приложения =====
     // Меняй APP_VERSION каждый раз, когда меняешь структуру HTML (добавляешь/удаляешь строки, таблицы, секции).
     // Это заставит браузер сбросить сохранённое состояние (localStorage) и начать с чистого листа.
@@ -1032,6 +1044,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadState();
     loadComments();
+    listenFirebase();
 });
 
 // ===== Reserve Checkbox =====
@@ -1221,6 +1234,80 @@ function loadComments() {
     });
 }
 
+// ===== Firebase Sync =====
+function syncToFirebase(state) {
+    if (isSyncing) return;
+    try {
+        syncRef.set(state);
+    } catch(e) { console.warn('Firebase sync error:', e); }
+}
+
+function listenFirebase() {
+    try {
+        syncRef.on('value', function(snapshot) {
+            var data = snapshot.val();
+            if (!data) return;
+            isSyncing = true;
+            // Применяем статусы из Firebase
+            if (data.statuses) {
+                data.statuses.forEach(function(s) {
+                    var container = document.getElementById(s.container);
+                    if (!container) return;
+                    var tables = container.querySelectorAll('table');
+                    var targetTable = (s.tableIndex !== undefined && tables[s.tableIndex]) ? tables[s.tableIndex] : null;
+                    var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+                    rows.forEach(function(row) {
+                        var numCell = row.querySelector('.col-number');
+                        if (numCell && numCell.textContent.trim() === s.num) {
+                            var indicator = row.querySelector('.status-indicator');
+                            if (indicator) {
+                                indicator.className = 'status-indicator status-' + s.status;
+                                indicator.textContent = s.status === 'on' ? '✓' : (s.status === 'off' ? '✕' : '⚠');
+                                indicator.title = 'Статус: ' + (s.status === 'on' ? 'Вкл' : (s.status === 'off' ? 'Выкл' : 'Авария'));
+                            }
+                        }
+                    });
+                });
+            }
+            // Применяем названия из Firebase
+            if (data.names) {
+                data.names.forEach(function(n) {
+                    var container = document.getElementById(n.container);
+                    if (!container) return;
+                    var tables = container.querySelectorAll('table');
+                    var targetTable = (n.tableIndex !== undefined && tables[n.tableIndex]) ? tables[n.tableIndex] : null;
+                    var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+                    rows.forEach(function(row) {
+                        var numCell = row.querySelector('.col-number');
+                        if (numCell && numCell.textContent.trim() === n.num) {
+                            var nameEl = row.querySelector('.editable-name');
+                            if (nameEl && !nameEl.classList.contains('editing')) nameEl.textContent = n.name;
+                        }
+                    });
+                });
+            }
+            // Применяем резервы из Firebase
+            if (data.reserves) {
+                data.reserves.forEach(function(r) {
+                    var container = document.getElementById(r.container);
+                    if (!container) return;
+                    var tables = container.querySelectorAll('table');
+                    var targetTable = (r.tableIndex !== undefined && tables[r.tableIndex]) ? tables[r.tableIndex] : null;
+                    var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+                    rows.forEach(function(row) {
+                        var numCell = row.querySelector('.col-number');
+                        if (numCell && numCell.textContent.trim() === r.num) {
+                            var cb = row.querySelector('.reserve-checkbox');
+                            if (cb) { cb.checked = r.checked; if (r.checked) row.classList.add('reserve-occupied'); else row.classList.remove('reserve-occupied'); }
+                        }
+                    });
+                });
+            }
+            isSyncing = false;
+        });
+    } catch(e) { console.warn('Firebase listen error:', e); isSyncing = false; }
+}
+
 // ===== Save/Load State =====
 function saveState() {
     var state = { statuses: [], names: [], reserves: [] };
@@ -1266,6 +1353,8 @@ function saveState() {
     });
 
     try { localStorage.setItem('panelState', JSON.stringify(state)); } catch(e) {}
+    // Синхронизируем с Firebase
+    syncToFirebase(state);
 }
 
 function loadState() {
