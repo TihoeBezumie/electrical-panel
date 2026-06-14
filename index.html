@@ -1108,13 +1108,33 @@ function toggleComment(btn) {
     if (!box) return;
     var isOpen = box.classList.contains('open');
     if (isOpen) {
-        box.classList.remove('open');
-        box.style.display = 'none';
+        closeComment(box);
     } else {
+        // Загружаем сохранённый текст в поле ввода
+        var saved = getCommentText(btn);
+        box.value = saved || '';
         box.classList.add('open');
         box.style.display = 'block';
         box.focus();
     }
+}
+
+function closeComment(box) {
+    box.classList.remove('open');
+    box.style.display = 'none';
+}
+
+function getCommentText(btn) {
+    var container = btn.closest('.container');
+    var containerId = container ? container.id : '';
+    var row = btn.closest('tr');
+    var numCell = row ? row.querySelector('.col-number') : null;
+    var num = numCell ? numCell.textContent.trim() : '';
+    var table = btn.closest('table');
+    var tables = container ? container.querySelectorAll('table') : [];
+    var tableIndex = Array.from(tables).indexOf(table);
+    var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
+    try { return localStorage.getItem(key) || ''; } catch(e) { return ''; }
 }
 
 function saveComment(textarea) {
@@ -1152,6 +1172,9 @@ function saveComment(textarea) {
     } else if (commentText) {
         commentText.remove();
     }
+
+    // Закрываем окно ввода
+    closeComment(textarea);
 }
 
 function loadComments() {
