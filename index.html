@@ -502,6 +502,29 @@
             word-break: break-word;
         }
 
+        /* ===== PDF кнопка ===== */
+        .pdf-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-left: 10px;
+            border-radius: 6px;
+            transition: background 0.2s, transform 0.15s;
+            touch-action: manipulation;
+            vertical-align: middle;
+            user-select: none;
+            line-height: 1;
+            background: var(--bg-nav-btn);
+            color: #fff;
+            border: none;
+        }
+        .pdf-btn:hover { background: var(--bg-nav-btn-hover); transform: scale(1.1); }
+        .pdf-btn:active { transform: scale(0.95); }
+
         @media print {
             .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
             body { padding: 0; background: #fff; }
@@ -921,6 +944,29 @@
 </div>
 
 <script>
+// ===== PDF Print =====
+function printShield(containerId) {
+    // Показываем только нужный контейнер
+    document.querySelectorAll('.container').forEach(function(c) {
+        c.classList.remove('active');
+        if (c.id === containerId) {
+            c.classList.add('active');
+        }
+    });
+    // Убираем лишние элементы из печати
+    var printStyle = document.createElement('style');
+    printStyle.id = 'print-style';
+    printStyle.textContent = '@media print { .nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box { display: none !important; } }';
+    document.head.appendChild(printStyle);
+    // Открываем окно печати
+    window.print();
+    // Удаляем временный стиль
+    setTimeout(function() {
+        var s = document.getElementById('print-style');
+        if (s) s.remove();
+    }, 1000);
+}
+
 // ===== iOS detection =====
 var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
@@ -1021,6 +1067,18 @@ document.addEventListener('DOMContentLoaded', function() {
         el.addEventListener('touchstart', function(e) {
             // Let the click handler do the work, but prevent double-firing
         }, {passive: true});
+    });
+
+    // Add PDF button to each h1
+    document.querySelectorAll('.container h1').forEach(function(h1) {
+        var container = h1.closest('.container');
+        if (!container) return;
+        var btn = document.createElement('button');
+        btn.className = 'pdf-btn';
+        btn.textContent = '📄';
+        btn.setAttribute('onclick', 'printShield("' + container.id + '")');
+        btn.setAttribute('title', 'Печать / PDF');
+        h1.appendChild(btn);
     });
 
     // Add comment toggle to each row
