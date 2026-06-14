@@ -1017,8 +1017,11 @@ function saveState() {
         var containerId = container ? container.id : '';
         var numCell = row ? row.querySelector('.col-number') : null;
         var num = numCell ? numCell.textContent.trim() : '';
+        var table = el.closest('table');
+        var tables = container ? container.querySelectorAll('table') : [];
+        var tableIndex = Array.from(tables).indexOf(table);
         state.statuses.push({
-            container: containerId, num: num,
+            container: containerId, tableIndex: tableIndex, num: num,
             status: el.classList.contains('status-on') ? 'on' : (el.classList.contains('status-off') ? 'off' : 'error')
         });
     });
@@ -1030,7 +1033,10 @@ function saveState() {
         var containerId = container ? container.id : '';
         var numCell = row ? row.querySelector('.col-number') : null;
         var num = numCell ? numCell.textContent.trim() : '';
-        state.names.push({ container: containerId, num: num, name: el.textContent.trim() });
+        var table = el.closest('table');
+        var tables = container ? container.querySelectorAll('table') : [];
+        var tableIndex = Array.from(tables).indexOf(table);
+        state.names.push({ container: containerId, tableIndex: tableIndex, num: num, name: el.textContent.trim() });
     });
 
     document.querySelectorAll('.reserve-checkbox').forEach(function(cb) {
@@ -1039,7 +1045,10 @@ function saveState() {
         var containerId = container ? container.id : '';
         var numCell = row ? row.querySelector('.col-number') : null;
         var num = numCell ? numCell.textContent.trim() : '';
-        state.reserves.push({ container: containerId, num: num, checked: cb.checked });
+        var table = cb.closest('table');
+        var tables = container ? container.querySelectorAll('table') : [];
+        var tableIndex = Array.from(tables).indexOf(table);
+        state.reserves.push({ container: containerId, tableIndex: tableIndex, num: num, checked: cb.checked });
     });
 
     try { localStorage.setItem('panelState', JSON.stringify(state)); } catch(e) {}
@@ -1054,7 +1063,11 @@ function loadState() {
         state.statuses.forEach(function(s) {
             var container = document.getElementById(s.container);
             if (!container) return;
-            container.querySelectorAll('tbody tr').forEach(function(row) {
+            // Если есть tableIndex — ищем только в конкретной таблице
+            var tables = container.querySelectorAll('table');
+            var targetTable = (s.tableIndex !== undefined && tables[s.tableIndex]) ? tables[s.tableIndex] : null;
+            var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+            rows.forEach(function(row) {
                 var numCell = row.querySelector('.col-number');
                 if (numCell && numCell.textContent.trim() === s.num) {
                     var indicator = row.querySelector('.status-indicator');
@@ -1069,7 +1082,10 @@ function loadState() {
         state.names.forEach(function(n) {
             var container = document.getElementById(n.container);
             if (!container) return;
-            container.querySelectorAll('tbody tr').forEach(function(row) {
+            var tables = container.querySelectorAll('table');
+            var targetTable = (n.tableIndex !== undefined && tables[n.tableIndex]) ? tables[n.tableIndex] : null;
+            var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+            rows.forEach(function(row) {
                 var numCell = row.querySelector('.col-number');
                 if (numCell && numCell.textContent.trim() === n.num) {
                     var nameEl = row.querySelector('.editable-name');
@@ -1080,7 +1096,10 @@ function loadState() {
         state.reserves.forEach(function(r) {
             var container = document.getElementById(r.container);
             if (!container) return;
-            container.querySelectorAll('tbody tr').forEach(function(row) {
+            var tables = container.querySelectorAll('table');
+            var targetTable = (r.tableIndex !== undefined && tables[r.tableIndex]) ? tables[r.tableIndex] : null;
+            var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+            rows.forEach(function(row) {
                 var numCell = row.querySelector('.col-number');
                 if (numCell && numCell.textContent.trim() === r.num) {
                     var cb = row.querySelector('.reserve-checkbox');
