@@ -420,6 +420,60 @@
             font-size: 1.1rem;
         }
 
+        /* ===== Комментарии ===== */
+        .comment-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-left: 6px;
+            border-radius: 4px;
+            transition: background 0.2s, transform 0.15s;
+            touch-action: manipulation;
+            vertical-align: middle;
+            user-select: none;
+            line-height: 1;
+        }
+        .comment-toggle:hover { background: rgba(52,152,219,0.15); transform: scale(1.15); }
+        .comment-toggle:active { transform: scale(0.95); }
+        .comment-toggle.has-comment { background: rgba(72,187,120,0.15); border-radius: 50%; }
+        .comment-box {
+            display: none;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: var(--edit-input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            width: 100%;
+            min-width: 120px;
+            outline: none;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .comment-box:focus {
+            border-color: var(--edit-input-border);
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.15);
+        }
+        .comment-box.open { display: block; }
+        .comment-text {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            opacity: 0.65;
+            margin-top: 2px;
+            padding-left: 4px;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         @media print {
             .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
             body { padding: 0; background: #fff; }
@@ -941,7 +995,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }, {passive: true});
     });
 
+    // Add comment toggle to each row
+    document.querySelectorAll('tbody tr').forEach(function(row) {
+        var nameCell = row.querySelector('.editable-name');
+        if (!nameCell) return;
+        // Create comment toggle button
+        var toggle = document.createElement('span');
+        toggle.className = 'comment-toggle';
+        toggle.textContent = '📝';
+        toggle.setAttribute('onclick', 'toggleComment(this)');
+        nameCell.parentNode.insertBefore(toggle, nameCell.nextSibling);
+        // Create comment textarea (hidden by default)
+        var textarea = document.createElement('textarea');
+        textarea.className = 'comment-box';
+        textarea.placeholder = 'Комментарий...';
+        textarea.setAttribute('onblur', 'saveComment(this)');
+        textarea.setAttribute('onkeydown', 'if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();this.blur()}');
+        toggle.parentNode.insertBefore(textarea, toggle.nextSibling);
+    });
+
     loadState();
+    loadComments();
 });
 
 // ===== Reserve Checkbox =====
@@ -1026,6 +1100,86 @@ function handleSearch(query) {
     } else if (noResultsEl) {
         noResultsEl.style.display = 'none';
     }
+}
+
+// ===== Comments =====
+function toggleComment(btn) {
+    var box = btn.parentNode.querySelector('.comment-box');
+    if (!box) return;
+    var isOpen = box.classList.contains('open');
+    if (isOpen) {
+        box.classList.remove('open');
+        box.style.display = 'none';
+    } else {
+        box.classList.add('open');
+        box.style.display = 'block';
+        box.focus();
+    }
+}
+
+function saveComment(textarea) {
+    var btn = textarea.parentNode.querySelector('.comment-toggle');
+    var comment = textarea.value.trim();
+    var container = textarea.closest('.container');
+    var containerId = container ? container.id : '';
+    var row = textarea.closest('tr');
+    var numCell = row ? row.querySelector('.col-number') : null;
+    var num = numCell ? numCell.textContent.trim() : '';
+    var table = textarea.closest('table');
+    var tables = container ? container.querySelectorAll('table') : [];
+    var tableIndex = Array.from(tables).indexOf(table);
+
+    var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
+    try {
+        if (comment) {
+            localStorage.setItem(key, comment);
+            btn.classList.add('has-comment');
+        } else {
+            localStorage.removeItem(key);
+            btn.classList.remove('has-comment');
+        }
+    } catch(e) {}
+
+    // Show/hide comment text below
+    var commentText = textarea.parentNode.querySelector('.comment-text');
+    if (comment) {
+        if (!commentText) {
+            commentText = document.createElement('span');
+            commentText.className = 'comment-text';
+            textarea.parentNode.appendChild(commentText);
+        }
+        commentText.textContent = comment;
+    } else if (commentText) {
+        commentText.remove();
+    }
+}
+
+function loadComments() {
+    document.querySelectorAll('.comment-toggle').forEach(function(btn) {
+        var container = btn.closest('.container');
+        var containerId = container ? container.id : '';
+        var row = btn.closest('tr');
+        var numCell = row ? row.querySelector('.col-number') : null;
+        var num = numCell ? numCell.textContent.trim() : '';
+        var table = btn.closest('table');
+        var tables = container ? container.querySelectorAll('table') : [];
+        var tableIndex = Array.from(tables).indexOf(table);
+        var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
+        try {
+            var saved = localStorage.getItem(key);
+            if (saved) {
+                btn.classList.add('has-comment');
+                // Show comment text
+                var existing = btn.parentNode.querySelector('.comment-text');
+                if (!existing) {
+                    var ct = document.createElement('span');
+                    ct.className = 'comment-text';
+                    btn.parentNode.appendChild(ct);
+                    ct.textContent = saved;
+                }
+            }
+        } catch(e) {}
+    });
 }
 
 // ===== Save/Load State =====
