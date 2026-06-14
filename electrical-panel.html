@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Электрощиты">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%232c3e50'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='%23fff'%3E⚡%3C/text%3E%3C/svg%3E">
+
+    <title>Панель управления: Электрощиты</title>
+    <script>
+    // ===== PWA Manifest (inline) =====
+    (function() {
+        var manifest = {
+            "name": "Электрощиты",
+            "short_name": "Щиты",
+            "description": "Панель управления электрощитами",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f8f9fa",
+            "theme_color": "#2c3e50",
+            "icons": [{
+                "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%232c3e50'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='%23fff'%3E⚡%3C/text%3E%3C/svg%3E",
+                "sizes": "192x192",
+                "type": "image/svg+xml"
+            }]
+        };
+        var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        var link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
+        document.head.appendChild(link);
+    })();
+    </script>
+
+    <style>
+        /* ===== CSS Variables & Themes ===== */
+        :root {
+            --bg-body: #f8f9fa;
+            --bg-container: #ffffff;
+            --bg-nav: #2c3e50;
+            --bg-nav-btn: #34495e;
+            --bg-nav-btn-hover: #1abc9c;
+            --bg-nav-btn-active: #1abc9c;
+            --text-primary: #333;
+            --text-heading: #2c3e50;
+            --text-subheading: #34495e;
+            --border-color: #dee2e6;
+            --th-bg: #f1f3f5;
+            --th-color: #495057;
+            --row-vvod-bg: #fff3cd;
+            --row-vvod-border: #ffeeba;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --status-on: #48bb78;
+            --status-off: #e53e3e;
+            --status-error: #ecc94b;
+            --search-bg: #fff;
+            --search-border: #cbd5e0;
+            --reserve-opacity: 0.7;
+            --toggle-bg: #cbd5e0;
+            --toggle-dot: #fff;
+            --edit-input-bg: #fff;
+            --edit-input-border: #3498db;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #1a202c;
+            --bg-container: #2d3748;
+            --bg-nav: #1a202c;
+            --bg-nav-btn: #4a5568;
+            --bg-nav-btn-hover: #38b2ac;
+            --bg-nav-btn-active: #38b2ac;
+            --text-primary: #e2e8f0;
+            --text-heading: #e2e8f0;
+            --text-subheading: #cbd5e0;
+            --border-color: #4a5568;
+            --th-bg: #4a5568;
+            --th-color: #e2e8f0;
+            --row-vvod-bg: #5a4a1a;
+            --row-vvod-border: #7a6a2a;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.2);
+            --search-bg: #4a5568;
+            --search-border: #718096;
+            --reserve-opacity: 0.5;
+            --toggle-bg: #4a5568;
+            --toggle-dot: #e2e8f0;
+            --edit-input-bg: #4a5568;
+            --edit-input-border: #38b2ac;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        /* iOS / touch fixes */
+        .status-indicator, .nav-btn, .editable-name, .reserve-checkbox, .theme-toggle {
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+        .status-indicator { -webkit-user-select: none; user-select: none; }
+        .editable-name { -webkit-user-select: none; user-select: none; }
+        .edit-btn {
+            display: none;
+            background: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 6px;
+            touch-action: manipulation;
+            vertical-align: middle;
+        }
+        .edit-btn:active { background: #2980b9; }
+        .editable-name:hover .edit-btn { display: inline; }
+        @media (hover: none) and (pointer: coarse) {
+            .edit-btn { display: inline; }
+            .editable-name:hover { background: transparent; }
+            .status-indicator { width: 38px; height: 38px; font-size: 16px; }
+            .status-indicator:active { transform: scale(0.9); }
+            .nav-btn { padding: 12px 14px; }
+            .reserve-checkbox { width: 26px; height: 26px; }
+        }
+
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .theme-toggle-wrapper {
+            max-width: 850px;
+            margin: 0 auto 10px auto;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: var(--toggle-bg);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border: none;
+            padding: 0;
+        }
+
+        .theme-toggle .dot {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: var(--toggle-dot);
+            border-radius: 50%;
+            transition: transform 0.3s, background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        [data-theme="dark"] .theme-toggle .dot { transform: translateX(28px); }
+
+        .theme-label {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            opacity: 0.7;
+        }
+
+        .search-wrapper {
+            max-width: 850px;
+            margin: 0 auto 10px auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 2px solid var(--search-border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: var(--search-bg);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-primary);
+            opacity: 0.4;
+        }
+
+        .nav-panel {
+            max-width: 850px;
+            margin: 0 auto 20px auto;
+            background: var(--bg-nav);
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            transition: background 0.3s;
+        }
+
+        .nav-btn {
+            background: var(--bg-nav-btn);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .nav-btn:hover::after { opacity: 1; }
+        .nav-btn:hover { transform: translateY(-1px); }
+        .nav-btn:active { transform: translateY(0); }
+
+        .nav-btn.active {
+            background: var(--bg-nav-btn-active);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--bg-container);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            display: none;
+            animation: fadeIn 0.35s ease;
+            transition: background 0.3s;
+        }
+
+        .container.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container.search-mode { display: block !important; animation: fadeIn 0.35s ease; }
+        .container.search-mode.hidden-by-search { display: none !important; }
+
+        h1 {
+            text-align: center;
+            color: var(--text-heading);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        h2 {
+            color: var(--text-subheading);
+            font-size: 1.1rem;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            padding-left: 5px;
+            border-left: 4px solid #3498db;
+            transition: color 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: transparent;
+        }
+
+        th {
+            background-color: var(--th-bg);
+            color: var(--th-color);
+            font-weight: 600;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid var(--border-color);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+
+        tr { transition: background 0.2s; }
+
+        tr:not(.row-main-vvod):hover { background: rgba(52,152,219,0.04); }
+        [data-theme="dark"] tr:not(.row-main-vvod):hover { background: rgba(56,178,172,0.08); }
+
+        .col-icon { width: 110px; text-align: center; line-height: 1; padding: 4px 8px; }
+        .col-icon-emoji { width: 110px; text-align: center; font-size: 2.4rem; line-height: 1; padding: 4px 8px; }
+        .col-icon-reserve { font-size: 1.7rem; text-align: center; line-height: 1; padding: 4px 8px; }
+        .col-number { width: 70px; text-align: center; font-weight: bold; color: var(--th-color); }
+        .col-status { width: 60px; text-align: center; }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 2px solid transparent;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .status-indicator:hover { transform: scale(1.15); }
+        .status-indicator:active { transform: scale(0.95); }
+
+        .status-on { background: var(--status-on); color: #fff; border-color: #38a169; }
+        .status-off { background: var(--status-off); color: #fff; border-color: #c53030; }
+        .status-error { background: var(--status-error); color: #1a202c; border-color: #d69e2e; }
+
+        .editable-name {
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .editable-name:hover { background: rgba(52,152,219,0.1); }
+        .editable-name.editing { background: transparent; cursor: text; }
+
+        .editable-name input {
+            background: var(--edit-input-bg);
+            border: 2px solid var(--edit-input-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            width: 100%;
+            min-width: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .editable-name input:focus {
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 2px rgba(56,178,172,0.2);
+        }
+
+        .reserve-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #1abc9c;
+            transition: transform 0.15s;
+        }
+
+        .reserve-checkbox:hover { transform: scale(1.15); }
+
+        tr.reserve-occupied { opacity: 1 !important; }
+        tr.reserve-occupied td { font-weight: 600; }
+
+        .row-main-vvod { background-color: var(--row-vvod-bg) !important; font-weight: bold; transition: background 0.3s; }
+        .row-main-vvod td { border-bottom: 2px solid var(--row-vvod-border); }
+
+        tr[style*="opacity"] { opacity: var(--reserve-opacity) !important; }
+
+        .svg-icon { width: 48px; height: 48px; vertical-align: middle; display: inline-block; }
+
+        .search-highlight { background: #fef08a; padding: 1px 3px; border-radius: 2px; }
+        [data-theme="dark"] .search-highlight { background: #7c6a1a; color: #e2e8f0; }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-primary);
+            opacity: 0.6;
+            font-size: 1.1rem;
+        }
+
+        @media print {
+            .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
+            body { padding: 0; background: #fff; }
+            .container { display: block !important; page-break-after: always; box-shadow: none; padding: 0; }
+            .container.search-mode.hidden-by-search { display: block !important; }
+            .editable-name { cursor: default; }
+            .editable-name:hover { background: transparent; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .nav-panel { padding: 8px; gap: 6px; border-radius: 10px; }
+            .nav-btn { padding: 8px 12px; font-size: 0.8rem; flex: 1 1 auto; min-width: 0; }
+            .container { padding: 16px; border-radius: 10px; }
+            h1 { font-size: 1.3rem; }
+            table { font-size: 0.85rem; }
+            td, th { padding: 8px 6px; }
+            .col-icon, .col-icon-emoji { width: 60px; font-size: 1.6rem; }
+            .col-icon-reserve { font-size: 1.2rem; }
+            .col-number { width: 40px; font-size: 0.85rem; }
+            .col-status { width: 40px; }
+            .svg-icon { width: 36px; height: 36px; }
+            .status-indicator { width: 26px; height: 26px; font-size: 11px; }
+            .editable-name input { min-width: 80px; font-size: 0.85rem; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-btn { font-size: 0.72rem; padding: 6px 8px; }
+            .container { padding: 12px; }
+            td, th { padding: 6px 4px; }
+            .col-icon, .col-icon-emoji { width: 44px; font-size: 1.2rem; }
+            .col-icon-reserve { font-size: 1rem; }
+            .col-number { width: 30px; font-size: 0.75rem; }
+            .svg-icon { width: 28px; height: 28px; }
+            .status-indicator { width: 22px; height: 22px; font-size: 9px; }
+            h1 { font-size: 1.1rem; }
+            h2 { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+<symbol id="mw" viewBox="0 0 64 64">
+<rect x="4" y="12" width="56" height="40" rx="6" fill="#4a5568"/>
+<rect x="6" y="14" width="52" height="36" rx="4" fill="#718096"/>
+<rect x="10" y="18" width="32" height="28" rx="3" fill="#1a202c"/>
+<rect x="12" y="20" width="28" height="24" rx="2" fill="#2b6cb0" opacity="0.8"/>
+<path d="M14 20 L30 20 L12 38 Z" fill="#63b3ed" opacity="0.4"/>
+<rect x="46" y="18" width="10" height="28" rx="2" fill="#2d3748"/>
+<rect x="48" y="21" width="6" height="4" rx="1" fill="#1a202c"/>
+<circle cx="50" cy="23" r="0.5" fill="#48bb78"/>
+<circle cx="52" cy="23" r="0.5" fill="#48bb78"/>
+<circle cx="51" cy="31" r="2" fill="#a0aec0"/>
+<rect x="48" y="36" width="6" height="2" rx="0.5" fill="#e53e3e"/>
+<rect x="48" y="40" width="6" height="2" rx="0.5" fill="#48bb78"/>
+<rect x="12" y="52" width="6" height="2" fill="#1a202c"/>
+<rect x="46" y="52" width="6" height="2" fill="#1a202c"/>
+</symbol>
+<symbol id="cctv" viewBox="0 0 64 64">
+<path d="M14 46 L24 46 L24 36 L16 36 Z" fill="#718096"/>
+<rect x="10" y="32" width="4" height="18" rx="1" fill="#4a5568"/>
+<path d="M22 42 L34 28 L38 32 L26 46 Z" fill="#cbd5e0"/>
+<rect x="26" y="16" width="26" height="16" rx="3" fill="#e2e8f0"/>
+<path d="M22 16 L56 12 L54 16 L26 16 Z" fill="#cbd5e0"/>
+<path d="M24 16 L54 13 L54 16 Z" fill="#edf2f7"/>
+<path d="M52 16 L52 32 C52 32, 55 28, 55 24 C55 20, 52 16, 52 16 Z" fill="#1a202c"/>
+<ellipse cx="53.5" cy="24" rx="1.5" ry="4" fill="#2b6cb0"/>
+<ellipse cx="53" cy="23" rx="0.5" ry="1.5" fill="#fff" opacity="0.7"/>
+<line x1="28" y1="16" x2="20" y2="6" stroke="#a0aec0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="20" cy="6" r="1.5" fill="#cbd5e0"/>
+</symbol>
+<symbol id="jug-horizontal" viewBox="0 0 64 64">
+<path d="M44 32 Q 54 32, 58 42 Q 56 46, 48 44 Q 44 36, 44 32" fill="#63b3ed"/>
+<path d="M45 31 C 52 30, 58 36, 60 44" stroke="#3182ce" stroke-width="2" fill="none"/>
+<ellipse cx="24" cy="32" rx="14" ry="12" fill="#c05621"/>
+<ellipse cx="23" cy="31" rx="14" ry="12" fill="#dd6b20"/>
+<path d="M34 25 L44 27 L44 35 L34 37 Z" fill="#dd6b20"/>
+<ellipse cx="44" cy="31" rx="2" ry="4" fill="#9c4221"/>
+</symbol>
+<symbol id="fountain-small" viewBox="0 0 64 64">
+<ellipse cx="32" cy="44" rx="18" ry="4" fill="#3182ce"/>
+<path d="M12 40 C 12 48, 52 48, 52 40 L44 46 L20 46 Z" fill="#a0aec0"/>
+<ellipse cx="32" cy="40" rx="20" ry="4" fill="#cbd5e0" stroke="#718096"/>
+<path d="M26 46 L38 46 L35 56 L29 56 Z" fill="#718096"/>
+<path d="M32 32 Q 22 20, 16 38 M32 32 Q 42 20, 48 38" fill="none" stroke="#63b3ed" stroke-width="2.5"/>
+</symbol>
+<symbol id="palm" viewBox="0 0 64 64">
+<path d="M30 52 Q 26 38, 30 24 L34 24 Q 38 38, 34 52 Z" fill="#8c6239"/>
+<path d="M32 24 Q 14 26, 10 34" fill="none" stroke="#48bb78" stroke-width="3" stroke-linecap="round"/>
+<path d="M32 24 Q 18 16, 12 18" fill="none" stroke="#38a169" stroke-width="3" stroke-linecap="round"/>
+<path d="M32 24 Q 32 8, 26 6" fill="none" stroke="#48bb78" stroke-width="3" stroke-linecap="round"/>
+<path d="M32 24 Q 32 8, 38 6" fill="none" stroke="#38a169" stroke-width="3" stroke-linecap="round"/>
+<path d="M32 24 Q 46 16, 52 18" fill="none" stroke="#48bb78" stroke-width="3" stroke-linecap="round"/>
+<path d="M32 24 Q 50 26, 54 34" fill="none" stroke="#38a169" stroke-width="3" stroke-linecap="round"/>
+</symbol>
+<symbol id="fountain-lace" viewBox="0 0 64 64">
+<path d="M12 44 L52 44 L46 54 L18 54 Z" fill="#cbd5e0" stroke="#4a5568" stroke-width="2"/>
+<rect x="29" y="28" width="6" height="16" fill="#a0aec0"/>
+<path d="M32 12 C24 12, 18 24, 18 44 M32 12 C40 12, 46 24, 46 44 M32 8 L32 28" fill="none" stroke="#63b3ed" stroke-width="3"/>
+</symbol>
+<symbol id="jug-vertical" viewBox="0 0 64 64">
+<path d="M32 14 Q 18 10, 12 28 M32 14 Q 46 10, 52 28" fill="none" stroke="#63b3ed" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="32" cy="42" rx="14" ry="12" fill="#c05621"/>
+<ellipse cx="32" cy="40" rx="14" ry="12" fill="#dd6b20"/>
+<rect x="26" y="22" width="12" height="10" fill="#c05621"/>
+<rect x="26" y="21" width="12" height="10" fill="#dd6b20"/>
+<ellipse cx="32" cy="21" rx="6" ry="2" fill="#9c4221"/>
+<ellipse cx="32" cy="21" rx="4" ry="1" fill="#1a202c"/>
+<path d="M18 36 C 14 30, 20 24, 26 24 M46 36 C 50 30, 44 24, 38 24" stroke="#9c4221" stroke-width="2.5" fill="none"/>
+</symbol>
+<symbol id="boulder" viewBox="0 0 64 64">
+<ellipse cx="32" cy="48" rx="22" ry="4" fill="#718096" opacity="0.4"/>
+<path d="M10 42 C 6 32, 18 14, 34 16 C 50 18, 58 28, 54 40 C 48 46, 18 46, 10 42 Z" fill="#718096"/>
+<path d="M11 41 C 7 31, 19 13, 35 15 C 49 17, 57 27, 53 39 C 47 45, 19 45, 11 41 Z" fill="#8c6239"/>
+<path d="M20 22 Q 28 28, 36 24 M34 18 Q 40 26, 46 30" stroke="#5a4028" stroke-width="1.5" fill="none" opacity="0.6"/>
+<path d="M14 32 Q 24 34, 30 28" stroke="#edf2f7" stroke-width="1.5" fill="none" opacity="0.4"/>
+</symbol>
+<symbol id="ac" viewBox="0 0 64 64">
+<rect x="8" y="20" width="48" height="24" rx="3" fill="#edf2f7" stroke="#cbd5e0"/>
+<rect x="12" y="38" width="40" height="3" fill="#3182ce"/>
+<circle cx="48" cy="26" r="2" fill="#4299e1"/>
+<path d="M20 48 L24 54 M28 48 L32 54 M36 48 L40 54" stroke="#63b3ed" stroke-width="2"/>
+</symbol>
+<symbol id="manhole-flat" viewBox="0 0 64 64">
+<ellipse cx="32" cy="44" rx="22" ry="6" fill="#4a5568" opacity="0.4"/>
+<ellipse cx="32" cy="40" rx="22" ry="8" fill="#2d3748" stroke="#1a202c" stroke-width="1.5"/>
+<ellipse cx="32" cy="38" rx="18" ry="6" fill="#4a5568"/>
+<line x1="18" y1="38" x2="46" y2="38" stroke="#1a202c" stroke-width="1"/>
+<line x1="23" y1="35" x2="41" y2="35" stroke="#1a202c" stroke-width="1"/>
+<line x1="23" y1="41" x2="41" y2="41" stroke="#1a202c" stroke-width="1"/>
+<circle cx="32" cy="38" r="2" fill="#1a202c"/>
+</symbol>
+<symbol id="stump" viewBox="0 0 64 64">
+<ellipse cx="32" cy="48" rx="22" ry="5" fill="#718096" opacity="0.3"/>
+<path d="M10 32 L54 32 L52 48 L12 48 Z" fill="#5a4028"/>
+<ellipse cx="32" cy="48" rx="20" ry="4" fill="#4a3728"/>
+<ellipse cx="32" cy="32" rx="22" ry="6" fill="#8c6d53" stroke="#5a4028" stroke-width="2"/>
+<ellipse cx="32" cy="32" rx="16" ry="4.5" fill="none" stroke="#795e47" stroke-width="1"/>
+<ellipse cx="32" cy="32" rx="10" ry="3" fill="none" stroke="#795e47" stroke-width="1"/>
+<circle cx="30" cy="31" r="1" fill="#5a4028"/>
+<path d="M32 32 L44 34" stroke="#4a3728" stroke-width="1.5" fill="none"/>
+</symbol>
+<symbol id="lamp-post" viewBox="0 0 64 64">
+<path d="M14 26 L50 26 L58 56 L6 56 Z" fill="#ecc94b" opacity="0.2"/>
+<rect x="30" y="18" width="4" height="38" fill="#2d3748"/>
+<path d="M26 56 L38 56 L34 52 L30 52 Z" fill="#1a202c"/>
+<path d="M26 18 L38 18 L35 15 L29 15 Z" fill="#1a202c"/>
+<path d="M24 15 L40 15 L36 26 L28 26 Z" fill="#fbd38d"/>
+<path d="M26 15 L38 15 L35 24 L29 24 Z" fill="#fff" opacity="0.6"/>
+<path d="M20 15 L44 15 L32 8 Z" fill="#2d3748"/>
+</symbol>
+<symbol id="lamp-wall" viewBox="0 0 64 64">
+<circle cx="38" cy="32" r="16" fill="#ecc94b" opacity="0.15"/>
+<rect x="10" y="20" width="4" height="24" rx="1" fill="#1a202c"/>
+<path d="M12 24 Q 28 12, 38 22" stroke="#2d3748" stroke-width="3" fill="none"/>
+<path d="M12 36 L24 28" stroke="#2d3748" stroke-width="2" fill="none"/>
+<rect x="36" y="21" width="4" height="4" fill="#1a202c"/>
+<path d="M26 25 L50 25 L38 18 Z" fill="#2d3748"/>
+<path d="M28 25 L48 25 L44 38 L32 38 Z" fill="#fbd38d"/>
+<path d="M30 25 L46 25 L43 34 L33 34 Z" fill="#fff" opacity="0.5"/>
+<path d="M36 38 L40 38 L38 43 Z" fill="#1a202c"/>
+</symbol>
+<symbol id="underwater-lamp" viewBox="0 0 64 64">
+<path d="M24 16 L56 4 L56 48 L24 36 Z" fill="#ecc94b" opacity="0.25"/>
+<path d="M4 12 Q 16 8, 28 12 T 52 12 T 60 12 L60 56 L4 56 Z" fill="#63b3ed" opacity="0.3"/>
+<rect x="10" y="20" width="14" height="16" rx="2" fill="#a0aec0" transform="rotate(-15 17 28)"/>
+<path d="M22 17 L25 32" stroke="#718096" stroke-width="2"/>
+<path d="M8 40 L20 40 L16 30 L12 30 Z" fill="#4a5568"/>
+<circle cx="36" cy="20" r="2" fill="#fff" opacity="0.6"/>
+</symbol>
+<symbol id="flat-rock-brown" viewBox="0 0 64 64">
+<ellipse cx="28" cy="50" rx="22" ry="3" fill="#718096" opacity="0.25"/>
+<path d="M38 42 Q 52 40, 48 24" stroke="#2d3748" stroke-width="3" fill="none" stroke-linecap="round"/>
+<rect x="44" y="14" width="8" height="10" rx="2" fill="#3182ce" transform="rotate(15 48 19)"/>
+<line x1="46" y1="14" x2="46" y2="8" stroke="#a0aec0" stroke-width="2"/>
+<line x1="50" y1="15" x2="50" y2="9" stroke="#a0aec0" stroke-width="2"/>
+<path d="M4 48 L46 48 L44 32 L26 26 L10 34 Z" fill="#5a4028"/>
+<path d="M5 47 L45 47 L43 31 L27 25 L11 33 Z" fill="#8c6d53"/>
+<path d="M5 47 L24 47 L26 36 L11 33 Z" fill="#bfa38a"/>
+<path d="M24 47 L45 47 L43 31 L26 36 Z" fill="#795e47"/>
+<path d="M11 33 L26 36 L27 25 Z" fill="#d6bca2"/>
+<line x1="26" y1="36" x2="24" y2="47" stroke="#4a3728" stroke-width="1.5"/>
+<line x1="26" y1="36" x2="11" y2="33" stroke="#4a3728" stroke-width="1.5"/>
+<line x1="26" y1="36" x2="43" y2="31" stroke="#4a3728" stroke-width="1.5"/>
+</symbol>
+<symbol id="square-stone-grey" viewBox="0 0 64 64">
+<ellipse cx="22" cy="50" rx="14" ry="2" fill="#718096" opacity="0.25"/>
+<path d="M26 44 Q 44 42, 42 28" stroke="#2d3748" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<rect x="36" y="12" width="12" height="16" rx="3" fill="#3182ce" transform="rotate(10 42 20)"/>
+<line x1="39" y1="12" x2="39" y2="4" stroke="#a0aec0" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="45" y1="13" x2="45" y2="5" stroke="#a0aec0" stroke-width="2.5" stroke-linecap="round"/>
+<rect x="39" y="20" width="6" height="3" fill="#1a202c" transform="rotate(10 42 20)"/>
+<path d="M8 48 L32 48 L28 34 L12 34 Z" fill="#4a5568"/>
+<path d="M9 47 L31 47 L27 35 L13 35 Z" fill="#718096"/>
+<path d="M9 47 L20 47 L18 35 L13 35 Z" fill="#cbd5e0"/>
+<path d="M20 47 L31 47 L27 35 L18 35 Z" fill="#4a5568"/>
+<line x1="18" y1="35" x2="20" y2="47" stroke="#1a202c" stroke-width="1.5"/>
+</symbol>
+<symbol id="mansion-gate" viewBox="0 0 64 64">
+<rect x="4" y="48" width="56" height="4" fill="#a0aec0"/>
+<rect x="4" y="16" width="6" height="32" rx="1" fill="#718096" stroke="#4a5568" stroke-width="1"/>
+<rect x="54" y="16" width="6" height="32" rx="1" fill="#718096" stroke="#4a5568" stroke-width="1"/>
+<line x1="4" y1="26" x2="10" y2="26" stroke="#2d3748" stroke-width="0.5"/>
+<line x1="4" y1="36" x2="10" y2="36" stroke="#2d3748" stroke-width="0.5"/>
+<line x1="54" y1="26" x2="60" y2="26" stroke="#2d3748" stroke-width="0.5"/>
+<line x1="54" y1="36" x2="60" y2="36" stroke="#2d3748" stroke-width="0.5"/>
+<path d="M2 16 L12 16 L7 12 Z" fill="#4a5568"/>
+<path d="M52 16 L62 16 L57 12 Z" fill="#4a5568"/>
+<path d="M10 46 L54 46 L54 22 Q32 12, 10 22 Z" fill="none" stroke="#2d3748" stroke-width="2"/>
+<line x1="32" y1="17" x2="32" y2="46" stroke="#1a202c" stroke-width="2"/>
+<line x1="15" y1="23" x2="15" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<line x1="20" y1="21" x2="20" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<line x1="26" y1="19" x2="26" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<line x1="38" y1="19" x2="38" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<line x1="44" y1="21" x2="44" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<line x1="49" y1="23" x2="49" y2="46" stroke="#4a5568" stroke-width="1.5"/>
+<circle cx="32" cy="17" r="1.5" fill="#ecc94b"/>
+<path d="M14 23 L16 23 L15 19 Z" fill="#ecc94b"/>
+<path d="M19 21 L21 21 L20 17 Z" fill="#ecc94b"/>
+<path d="M25 19 L27 19 L26 15 Z" fill="#ecc94b"/>
+<path d="M37 19 L39 19 L38 15 Z" fill="#ecc94b"/>
+<path d="M43 21 L45 21 L44 17 Z" fill="#ecc94b"/>
+<path d="M48 23 L50 23 L49 19 Z" fill="#ecc94b"/>
+</symbol>
+</svg>
+
+<!-- ===== Theme Toggle & Search ===== -->
+<div class="theme-toggle-wrapper">
+    <span class="theme-label">🌙</span>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">
+        <span class="dot" id="themeDot">☀️</span>
+    </button>
+    <span class="theme-label">☀️</span>
+</div>
+
+<div class="search-wrapper">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 Поиск по всем щитам... (например: насос, розетка, освещение)" oninput="handleSearch(this.value)">
+</div>
+
+<!-- ===== Navigation ===== -->
+<div class="nav-panel">
+    <button class="nav-btn active" onclick="showShield('garage')">🚗 Щит Гараж</button>
+    <button class="nav-btn" onclick="showShield('izumrud')">🏡 Изумрудный Город</button>
+    <button class="nav-btn" onclick="showShield('teatr')">🎬 Щит Театр</button>
+    <button class="nav-btn" onclick="showShield('prud')">🌊 Щит у Пруда</button>
+    <button class="nav-btn" onclick="showShield('bassejn')">🏊 Щит у Бассейна</button>
+    <button class="nav-btn" onclick="showShield('vorota')">🚧 Щит у Ворот</button>
+</div>
+
+<!-- ===== Щит Гараж ===== -->
+<div class="container active" id="garage">
+    <h1>🚗 Щит гараж</h1>
+    <h2>Левая секция</h2>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr><td class="col-icon-emoji">⛺</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Питание беседки</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+        </tbody>
+    </table>
+    <h2>Правая секция</h2>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">Ввод</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Отключает весь щит</span></td></tr>
+            <tr><td class="col-icon-emoji">🍳</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Эл. плита 2 этаж</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#mw"/></svg></td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки фартука, кухня 2 этаж</span></td></tr>
+            <tr><td class="col-icon-emoji">🔌</td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки комнат 2 этаж</span></td></tr>
+            <tr><td class="col-icon-emoji">💡</td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение 2 этаж</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#cctv"/></svg></td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Щит камер (система охраны)</span></td></tr>
+            <tr><td class="col-icon-emoji">🔌</td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки гаража</span></td></tr>
+            <tr><td class="col-icon-emoji">💡</td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение гаража и фасада</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Щит Изумрудный Город ===== -->
+<div class="container" id="izumrud">
+    <h1>🏡 Щит изумрудный город</h1>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">Ввод</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Отключает весь щит</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#jug-horizontal"/></svg></td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Насос ближний (кувшины)</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#fountain-small"/></svg></td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Насос дальний</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#palm"/></svg></td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Подсветка деревьев</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#fountain-lace"/></svg></td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Фонтан</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#jug-vertical"/></svg></td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Насосы у тропинки</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец ближний (резерв)</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#boulder"/></svg></td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец ближний питание (внутри территории)</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">8</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец ближний (резерв)</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Щит Театр ===== -->
+<div class="container" id="teatr">
+    <h1>🎬 Щит Театр</h1>
+    <h2>Верхняя рейка</h2>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Ввод 3ф (Отключает весь щит)</span></td></tr>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">🖥️</td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Щит театра</span></td></tr>
+            <tr><td class="col-icon-emoji">🍳</td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Эл. плита кухня</span></td></tr>
+        </tbody>
+    </table>
+    <h2>Нижняя рейка</h2>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#ac"/></svg></td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Кондиционер 1</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#ac"/></svg></td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Кондиционер 2</span></td></tr>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚡</td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">УЗО (отключает питание всех автоматов правее)</span></td></tr>
+            <tr><td class="col-icon-emoji">🔌</td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки у стола</span></td></tr>
+            <tr><td class="col-icon-emoji">🍽️</td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Посудомоечная машина</span></td></tr>
+            <tr><td class="col-icon-emoji">🍳</td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Кухня фартук</span></td></tr>
+            <tr><td class="col-icon-emoji">🍦</td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Холод.</span></td></tr>
+            <tr><td class="col-icon-emoji">🚿</td><td class="col-number">8</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Санузел 1</span></td></tr>
+            <tr><td class="col-icon-emoji">🚿</td><td class="col-number">9</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Санузел 2</span></td></tr>
+            <tr><td class="col-icon-emoji">🎬</td><td class="col-number">10</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки театр столы</span></td></tr>
+            <tr><td class="col-icon-emoji">🎬</td><td class="col-number">11</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки театр столы</span></td></tr>
+            <tr><td class="col-icon-emoji">🎬</td><td class="col-number">12</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки театр столы</span></td></tr>
+            <tr><td class="col-icon-emoji">🎬</td><td class="col-number">13</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки театр столы</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Щит у Пруда ===== -->
+<div class="container" id="prud">
+    <h1>🌊 Щит у пруда</h1>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">Ввод</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Отключение фазы щита</span></td></tr>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">Ввод</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Отключение ноля щита</span></td></tr>
+            <tr><td class="col-icon-emoji">🐟</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Аэратор пруда</span></td></tr>
+            <tr><td class="col-icon-emoji">💦</td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Насос у забора</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#manhole-flat"/></svg></td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у щита</span></td></tr>
+            <tr><td class="col-icon-emoji">🌱</td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Полив</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#stump"/></svg></td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец дальний у пруда</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#lamp-post"/></svg></td><td class="col-number">8</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение, столбы вдоль тропинок</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#lamp-wall"/></svg></td><td class="col-number">9</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение, фонари забора</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">10</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">11</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr><td class="col-icon-emoji">⚙️</td><td class="col-number">12</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Питание реле освещения</span></td></tr>
+            <tr><td class="col-icon-emoji">🍖</td><td class="col-number">13</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетка у мангала</span></td></tr>
+            <tr><td class="col-icon-emoji">🔌</td><td class="col-number">14</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетка под щитом</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">15</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Щит у Бассейна ===== -->
+<div class="container" id="bassejn">
+    <h1>🏊 Щит у бассейна</h1>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">Ввод</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Отключает питание щита</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#underwater-lamp"/></svg></td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение прудика</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у мостика, резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#flat-rock-brown"/></svg></td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у щита, розетки (все)</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#flat-rock-brown"/></svg></td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у мостика, розетка 1</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#flat-rock-brown"/></svg></td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у мостика розетка 2</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#flat-rock-brown"/></svg></td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у дорожки, розетки</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">8</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у дорожки, резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">9</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у щита, резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">10</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Колодец у щита, резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+            <tr><td class="col-icon-emoji">💦</td><td class="col-number">11</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Насосы пруда с мостиками (у выхода)</span></td></tr>
+            <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">12</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ===== Щит у Ворот ===== -->
+<div class="container" id="vorota">
+    <h1>🚧 Щит у ворот</h1>
+    <table>
+        <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
+        <tbody>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚠️</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Ввод, отключает питание щита</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#square-stone-grey"/></svg></td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетки ландшафта</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#fountain-lace"/></svg></td><td class="col-number">3</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Розетка насосов фонтана Ангелочки</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#underwater-lamp"/></svg></td><td class="col-number">4</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Подсветка фонтана ангелочки и насос</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#mansion-gate"/></svg></td><td class="col-number">5</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Ворота и калитка дом 45</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#mansion-gate"/></svg></td><td class="col-number">6</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Ворота и калитка дом 46</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#lamp-post"/></svg></td><td class="col-number">7</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Освещение ландшафта</span></td></tr>
+            <tr class="row-main-vvod"><td class="col-icon-emoji">⚡</td><td class="col-number">8</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Узо освещения ландшафта</span></td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+// ===== iOS detection =====
+var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// ===== Theme Toggle =====
+function toggleTheme() {
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme');
+    var newTheme = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    try { localStorage.setItem('theme', newTheme); } catch(e) {}
+    updateThemeDot(newTheme);
+}
+
+function updateThemeDot(theme) {
+    var dot = document.getElementById('themeDot');
+    dot.textContent = theme === 'dark' ? '🌙' : '☀️';
+}
+
+(function() {
+    try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            updateThemeDot('dark');
+        }
+    } catch(e) {}
+})();
+
+// ===== Navigation =====
+function showShield(id) {
+    document.querySelectorAll('.container').forEach(function(c) { c.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('.container').forEach(function(c) {
+        c.classList.remove('search-mode', 'hidden-by-search');
+    });
+    document.querySelectorAll('.search-highlight').forEach(function(el) {
+        var parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+    });
+}
+
+// ===== Status Cycling =====
+function cycleStatus(el) {
+    if (el.classList.contains('status-on')) {
+        el.className = 'status-indicator status-off';
+        el.textContent = '✕';
+        el.title = 'Статус: Выкл';
+    } else if (el.classList.contains('status-off')) {
+        el.className = 'status-indicator status-error';
+        el.textContent = '⚠';
+        el.title = 'Статус: Авария';
+    } else {
+        el.className = 'status-indicator status-on';
+        el.textContent = '✓';
+        el.title = 'Статус: Вкл';
+    }
+    saveState();
+}
+
+// ===== Editable Names (touch-friendly) =====
+function editName(el) {
+    if (el.classList.contains('editing')) return;
+    var currentText = el.textContent.trim();
+    el.classList.add('editing');
+    el.innerHTML = '<input type="text" value="' + currentText.replace(/"/g, '"') + '" onblur="saveName(this)" onkeydown="if(event.key===\'Enter\')this.blur()" autofocus>';
+    var input = el.querySelector('input');
+    input.focus();
+    input.select();
+}
+
+function saveName(input) {
+    var span = input.parentNode;
+    var newName = input.value.trim() || '—';
+    span.classList.remove('editing');
+    span.textContent = newName;
+    saveState();
+}
+
+// On touch devices: tap on name shows edit button, tap on edit button opens editor
+// On desktop: double-click opens editor
+document.addEventListener('DOMContentLoaded', function() {
+    // Add edit buttons to all editable names
+    document.querySelectorAll('.editable-name').forEach(function(el) {
+        var btn = document.createElement('button');
+        btn.className = 'edit-btn';
+        btn.textContent = '✎';
+        btn.setAttribute('onclick', 'event.stopPropagation(); editName(this.parentNode);');
+        el.appendChild(btn);
+
+        // On touch devices, single tap opens editor
+        if (isTouchDevice) {
+            el.addEventListener('click', function(e) {
+                if (e.target.classList.contains('edit-btn')) return;
+                if (this.classList.contains('editing')) return;
+                editName(this);
+            });
+        }
+    });
+
+    // Add touchstart handler for status indicators (iOS needs this)
+    document.querySelectorAll('.status-indicator').forEach(function(el) {
+        el.addEventListener('touchstart', function(e) {
+            // Let the click handler do the work, but prevent double-firing
+        }, {passive: true});
+    });
+
+    loadState();
+});
+
+// ===== Reserve Checkbox =====
+function toggleReserve(cb) {
+    var tr = cb.closest('tr');
+    if (cb.checked) {
+        tr.classList.add('reserve-occupied');
+    } else {
+        tr.classList.remove('reserve-occupied');
+    }
+    saveState();
+}
+
+// ===== Search =====
+function handleSearch(query) {
+    var q = query.toLowerCase().trim();
+    var containers = document.querySelectorAll('.container');
+    document.querySelectorAll('.search-highlight').forEach(function(el) {
+        var parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+    });
+
+    if (!q) {
+        containers.forEach(function(c) { c.classList.remove('search-mode', 'hidden-by-search'); });
+        containers.forEach(function(c, i) { c.classList.toggle('active', i === 0); });
+        document.querySelectorAll('.nav-btn').forEach(function(b, i) { b.classList.toggle('active', i === 0); });
+        var noRes = document.querySelector('.no-results');
+        if (noRes) noRes.style.display = 'none';
+        return;
+    }
+
+    containers.forEach(function(c) { c.classList.add('search-mode'); });
+    var anyResults = false;
+
+    containers.forEach(function(container) {
+        var rows = container.querySelectorAll('tbody tr');
+        var hasMatch = false;
+
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            var nameCell = row.querySelector('.editable-name');
+            if (text.indexOf(q) !== -1) {
+                row.style.display = '';
+                hasMatch = true;
+                if (nameCell && !nameCell.classList.contains('editing')) {
+                    var name = nameCell.textContent;
+                    var idx = name.toLowerCase().indexOf(q);
+                    if (idx !== -1) {
+                        var before = name.substring(0, idx);
+                        var match = name.substring(idx, idx + q.length);
+                        var after = name.substring(idx + q.length);
+                        nameCell.innerHTML = before + '<span class="search-highlight">' + match + '</span>' + after;
+                    }
+                }
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        var allText = container.textContent.toLowerCase();
+        var headerMatch = allText.indexOf(q) !== -1;
+        var rowMatch = Array.from(container.querySelectorAll('tbody tr')).some(function(r) { return r.style.display !== 'none'; });
+
+        if (headerMatch || rowMatch) {
+            container.classList.remove('hidden-by-search');
+            anyResults = true;
+        } else {
+            container.classList.add('hidden-by-search');
+        }
+    });
+
+    var noResultsEl = document.querySelector('.no-results');
+    if (!anyResults) {
+        if (!noResultsEl) {
+            noResultsEl = document.createElement('div');
+            noResultsEl.className = 'no-results';
+            noResultsEl.textContent = '😕 Ничего не найдено по запросу "' + query + '"';
+            document.querySelector('.nav-panel').after(noResultsEl);
+        }
+        noResultsEl.style.display = '';
+    } else if (noResultsEl) {
+        noResultsEl.style.display = 'none';
+    }
+}
+
+// ===== Save/Load State =====
+function saveState() {
+    var state = { statuses: [], names: [], reserves: [] };
+
+    document.querySelectorAll('.status-indicator').forEach(function(el) {
+        var row = el.closest('tr');
+        var container = el.closest('.container');
+        var containerId = container ? container.id : '';
+        var numCell = row ? row.querySelector('.col-number') : null;
+        var num = numCell ? numCell.textContent.trim() : '';
+        state.statuses.push({
+            container: containerId, num: num,
+            status: el.classList.contains('status-on') ? 'on' : (el.classList.contains('status-off') ? 'off' : 'error')
+        });
+    });
+
+    document.querySelectorAll('.editable-name').forEach(function(el) {
+        if (el.classList.contains('editing')) return;
+        var row = el.closest('tr');
+        var container = el.closest('.container');
+        var containerId = container ? container.id : '';
+        var numCell = row ? row.querySelector('.col-number') : null;
+        var num = numCell ? numCell.textContent.trim() : '';
+        state.names.push({ container: containerId, num: num, name: el.textContent.trim() });
+    });
+
+    document.querySelectorAll('.reserve-checkbox').forEach(function(cb) {
+        var row = cb.closest('tr');
+        var container = cb.closest('.container');
+        var containerId = container ? container.id : '';
+        var numCell = row ? row.querySelector('.col-number') : null;
+        var num = numCell ? numCell.textContent.trim() : '';
+        state.reserves.push({ container: containerId, num: num, checked: cb.checked });
+    });
+
+    try { localStorage.setItem('panelState', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+    var saved;
+    try { saved = localStorage.getItem('panelState'); } catch(e) {}
+    if (!saved) return;
+    try {
+        var state = JSON.parse(saved);
+        state.statuses.forEach(function(s) {
+            var container = document.getElementById(s.container);
+            if (!container) return;
+            container.querySelectorAll('tbody tr').forEach(function(row) {
+                var numCell = row.querySelector('.col-number');
+                if (numCell && numCell.textContent.trim() === s.num) {
+                    var indicator = row.querySelector('.status-indicator');
+                    if (indicator) {
+                        indicator.className = 'status-indicator status-' + s.status;
+                        indicator.textContent = s.status === 'on' ? '✓' : (s.status === 'off' ? '✕' : '⚠');
+                        indicator.title = 'Статус: ' + (s.status === 'on' ? 'Вкл' : (s.status === 'off' ? 'Выкл' : 'Авария'));
+                    }
+                }
+            });
+        });
+        state.names.forEach(function(n) {
+            var container = document.getElementById(n.container);
+            if (!container) return;
+            container.querySelectorAll('tbody tr').forEach(function(row) {
+                var numCell = row.querySelector('.col-number');
+                if (numCell && numCell.textContent.trim() === n.num) {
+                    var nameEl = row.querySelector('.editable-name');
+                    if (nameEl && !nameEl.classList.contains('editing')) nameEl.textContent = n.name;
+                }
+            });
+        });
+        state.reserves.forEach(function(r) {
+            var container = document.getElementById(r.container);
+            if (!container) return;
+            container.querySelectorAll('tbody tr').forEach(function(row) {
+                var numCell = row.querySelector('.col-number');
+                if (numCell && numCell.textContent.trim() === r.num) {
+                    var cb = row.querySelector('.reserve-checkbox');
+                    if (cb) { cb.checked = r.checked; if (r.checked) row.classList.add('reserve-occupied'); }
+                }
+            });
+        });
+    } catch(e) { console.warn('Failed to load state:', e); }
+}
+</script>
+</body>
+</html>
