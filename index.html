@@ -11,7 +11,28 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%232c3e50'/%3E%3Ctext x='96' y='130' font-size='100' text-anchor='middle' fill='%23fff'%3E⚡%3C/text%3E%3C/svg%3E">
 
     <title>Панель управления: Электрощиты</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script>
+    // ===== Версия приложения =====
+    // Меняй APP_VERSION каждый раз, когда меняешь структуру HTML (добавляешь/удаляешь строки, таблицы, секции).
+    // Это заставит браузер сбросить сохранённое состояние (localStorage) и начать с чистого листа.
+    var APP_VERSION = '2.1';
+    // ===== Принудительный сброс localStorage при смене версии =====
+    // Если версия в коде не совпадает с сохранённой — стираем всё и начинаем заново.
+    // Это решает проблему, когда браузер закэшировал старый JS с битыми данными.
+    (function() {
+        try {
+            var savedVersion = localStorage.getItem('panelVersion');
+            if (savedVersion !== APP_VERSION) {
+                localStorage.removeItem('panelState');
+                localStorage.removeItem('panelVersion');
+                localStorage.setItem('panelVersion', APP_VERSION);
+                console.log('App version changed to ' + APP_VERSION + '. Old state cleared.');
+            }
+        } catch(e) {}
+    })();
     // ===== PWA Manifest (inline) =====
     (function() {
         var manifest = {
