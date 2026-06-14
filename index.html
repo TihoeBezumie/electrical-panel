@@ -632,6 +632,27 @@
 <path d="M20 47 L31 47 L27 35 L18 35 Z" fill="#4a5568"/>
 <line x1="18" y1="35" x2="20" y2="47" stroke="#1a202c" stroke-width="1.5"/>
 </symbol>
+<symbol id="gazebo" viewBox="0 0 64 64">
+<ellipse cx="32" cy="52" rx="24" ry="4" fill="#a0aec0" />
+<ellipse cx="32" cy="50" rx="24" ry="4" fill="#cbd5e0" />
+<ellipse cx="32" cy="49" rx="22" ry="3" fill="#b5845c" />
+<rect x="16" y="24" width="3" height="25" fill="#784e2f" />
+<rect x="45" y="24" width="3" height="25" fill="#784e2f" />
+<rect x="10" y="38" width="12" height="11" fill="none" stroke="#8c6239" stroke-width="1.5" />
+<line x1="13" y1="38" x2="13" y2="49" stroke="#8c6239" stroke-width="1" />
+<line x1="16" y1="38" x2="16" y2="49" stroke="#8c6239" stroke-width="1" />
+<line x1="19" y1="38" x2="19" y2="49" stroke="#8c6239" stroke-width="1" />
+<rect x="42" y="38" width="12" height="11" fill="none" stroke="#8c6239" stroke-width="1.5" />
+<line x1="45" y1="38" x2="45" y2="49" stroke="#8c6239" stroke-width="1" />
+<line x1="48" y1="38" x2="48" y2="49" stroke="#8c6239" stroke-width="1" />
+<line x1="51" y1="38" x2="51" y2="49" stroke="#8c6239" stroke-width="1" />
+<rect x="22" y="24" width="4" height="25" fill="#8c6239" />
+<rect x="38" y="24" width="4" height="25" fill="#8c6239" />
+<path d="M8 24 C 8 24, 32 6, 56 24 Z" fill="#9b2c2c" />
+<path d="M10 24 C 10 24, 32 8, 54 24 Z" fill="#c53030" />
+<path d="M31 8 L33 8 L32 3 Z" fill="#718096" />
+<circle cx="32" cy="2" r="1" fill="#ecc94b" />
+</symbol>
 <symbol id="mansion-gate" viewBox="0 0 64 64">
 <rect x="4" y="48" width="56" height="4" fill="#a0aec0"/>
 <rect x="4" y="16" width="6" height="32" rx="1" fill="#718096" stroke="#4a5568" stroke-width="1"/>
@@ -690,7 +711,7 @@
     <table>
         <thead><tr><th>Тип</th><th>№</th><th>Статус</th><th>Назначение</th></tr></thead>
         <tbody>
-            <tr><td class="col-icon-emoji">⛺</td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Питание беседки</span></td></tr>
+            <tr><td class="col-icon"><svg class="svg-icon" viewBox="0 0 64 64"><use href="#gazebo"/></svg></td><td class="col-number">1</td><td class="col-status"><span class="status-indicator status-on" onclick="cycleStatus(this)" title="Статус: Вкл">✓</span></td><td><span class="editable-name" ondblclick="editName(this)">Питание беседки</span></td></tr>
             <tr style="opacity:0.7;"><td class="col-icon-reserve">🔄</td><td class="col-number">2</td><td class="col-status"><span class="status-indicator status-off" onclick="cycleStatus(this)" title="Статус: Выкл">✕</span></td><td><span class="editable-name" ondblclick="editName(this)">Резерв</span> <input type="checkbox" class="reserve-checkbox" onchange="toggleReserve(this)" title="Отметить как занято"></td></tr>
         </tbody>
     </table>
