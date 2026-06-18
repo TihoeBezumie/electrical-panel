@@ -989,12 +989,19 @@ function printShield(containerId) {
     document.querySelectorAll('style').forEach(function(s) {
         styles += s.innerHTML + '\n';
     });
-    // Собираем SVG-спрайты (определения символов)
-    var svgSprites = '';
-    var svgContainer = document.querySelector('svg[style*="display:none"]');
-    if (svgContainer) {
-        svgSprites = svgContainer.outerHTML;
-    }
+    // Инлайним SVG-иконки: заменяем <use href="#..."> на полный SVG-код символа
+    var svgDefs = {};
+    document.querySelectorAll('svg[style*="display:none"] symbol').forEach(function(sym) {
+        svgDefs[sym.id] = sym.innerHTML;
+    });
+    content = content.replace(/<use href="#([^"]+)"\s*\/?>/g, function(match, id) {
+        var inner = svgDefs[id];
+        if (!inner) return match;
+        // Берём viewBox из оригинального symbol
+        var sym = document.querySelector('svg[style*="display:none"] symbol#' + id);
+        var vb = sym ? (sym.getAttribute('viewBox') || '0 0 64 64') : '0 0 64 64';
+        return '<svg class="svg-icon" viewBox="' + vb + '" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>';
+    });
     // Ссылка на сайт для QR — с хешем на конкретный щит
     var siteUrl = window.location.href.split('?')[0] + '?v=' + APP_VERSION + '#' + containerId;
     // Создаём HTML для нового окна
@@ -1016,7 +1023,6 @@ function printShield(containerId) {
         '</style>' +
         '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>' +
         '</head><body>' +
-        svgSprites +
         '<div class="container active">' + titleHTML + content.replace(/<h1[^>]*>.*?<\/h1>/, '') +
         '</div>' +
         '<div class="print-only-qr" id="printQrContainer"><div id="printQrCode"></div><div class="print-only-qr-label">Отсканируй для перехода<br>к этому щиту</div></div>' +
