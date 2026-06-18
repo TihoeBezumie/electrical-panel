@@ -507,22 +507,25 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            font-size: 1.1rem;
             cursor: pointer;
             margin-left: 10px;
-            border-radius: 6px;
-            transition: background 0.2s, transform 0.15s;
+            border-radius: 4px;
+            transition: transform 0.15s, opacity 0.2s;
             touch-action: manipulation;
             vertical-align: middle;
             user-select: none;
             line-height: 1;
-            background: var(--bg-nav-btn);
-            color: #fff;
+            background: none;
             border: none;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #e53e3e;
+            padding: 2px 6px;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
         }
-        .pdf-btn:hover { background: var(--bg-nav-btn-hover); transform: scale(1.1); }
+        .pdf-btn:hover { transform: scale(1.1); opacity: 1; }
         .pdf-btn:active { transform: scale(0.95); }
 
         @media print {
@@ -1073,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!container) return;
         var btn = document.createElement('button');
         btn.className = 'pdf-btn';
-        btn.textContent = '📄';
+        btn.textContent = 'PDF';
         btn.setAttribute('onclick', 'printShield("' + container.id + '")');
         btn.setAttribute('title', 'Печать / PDF');
         h1.appendChild(btn);
