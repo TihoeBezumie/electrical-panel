@@ -977,6 +977,9 @@
 <script>
 // ===== PDF Print =====
 function printShield(containerId) {
+    // Запоминаем, какой щит был активен до печати
+    var prevActive = document.querySelector('.container.active');
+    var prevId = prevActive ? prevActive.id : 'garage';
     // Показываем только нужный контейнер
     document.querySelectorAll('.container').forEach(function(c) {
         c.classList.remove('active');
@@ -984,11 +987,6 @@ function printShield(containerId) {
             c.classList.add('active');
         }
     });
-    // Убираем лишние элементы из печати
-    var printStyle = document.createElement('style');
-    printStyle.id = 'print-style';
-    printStyle.textContent = '@media print { .nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box { display: none !important; } }';
-    document.head.appendChild(printStyle);
     // Генерируем QR-код со ссылкой на сайт
     var qrContainer = document.getElementById('printQrCode');
     qrContainer.innerHTML = '';
@@ -1002,14 +1000,18 @@ function printShield(containerId) {
             correctLevel: QRCode.CorrectLevel.H
         });
     } catch(e) { console.warn('QR generation error:', e); }
-    // Открываем окно печати
-    window.print();
-    // Удаляем временный стиль
+    // Открываем окно печати с небольшой задержкой, чтобы DOM обновился
     setTimeout(function() {
-        var s = document.getElementById('print-style');
-        if (s) s.remove();
+        window.print();
+        // После печати возвращаем предыдущий активный щит
+        document.querySelectorAll('.container').forEach(function(c) {
+            c.classList.remove('active');
+            if (c.id === prevId) {
+                c.classList.add('active');
+            }
+        });
         qrContainer.innerHTML = '';
-    }, 1000);
+    }, 100);
 }
 
 // ===== iOS detection =====
