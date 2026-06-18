@@ -989,8 +989,14 @@ function printShield(containerId) {
     document.querySelectorAll('style').forEach(function(s) {
         styles += s.innerHTML + '\n';
     });
-    // Ссылка на сайт для QR
-    var siteUrl = window.location.href.split('?')[0];
+    // Собираем SVG-спрайты (определения символов)
+    var svgSprites = '';
+    var svgContainer = document.querySelector('svg[style*="display:none"]');
+    if (svgContainer) {
+        svgSprites = svgContainer.outerHTML;
+    }
+    // Ссылка на сайт для QR — с хешем на конкретный щит
+    var siteUrl = window.location.href.split('?')[0] + '?v=' + APP_VERSION + '#' + containerId;
     // Создаём HTML для нового окна
     var printHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
         '<title>Печать щита</title>' +
@@ -1010,9 +1016,10 @@ function printShield(containerId) {
         '</style>' +
         '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>' +
         '</head><body>' +
+        svgSprites +
         '<div class="container active">' + titleHTML + content.replace(/<h1[^>]*>.*?<\/h1>/, '') +
         '</div>' +
-        '<div class="print-only-qr" id="printQrContainer"><div id="printQrCode"></div><div class="print-only-qr-label">Отсканируй для открытия<br>актуальной версии щита</div></div>' +
+        '<div class="print-only-qr" id="printQrContainer"><div id="printQrCode"></div><div class="print-only-qr-label">Отсканируй для перехода<br>к этому щиту</div></div>' +
         '<script>' +
         'try { new QRCode(document.getElementById("printQrCode"), { text: "' + siteUrl + '", width: 80, height: 80, colorDark: "#333333", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); } catch(e) {}' +
         'window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); };' +
@@ -1024,7 +1031,7 @@ function printShield(containerId) {
         printWindow.document.write(printHTML);
         printWindow.document.close();
     } else {
-        // Если блокировщик всплывающих окон — fallback на старый метод
+        // Если блокировщик всплывающих окон — fallback
         alert('Пожалуйста, разрешите всплывающие окна для печати PDF.');
     }
 }
