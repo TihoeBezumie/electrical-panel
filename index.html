@@ -14,6 +14,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <!-- QRCode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -528,13 +530,34 @@
         .pdf-btn:hover { transform: scale(1.1); opacity: 1; }
         .pdf-btn:active { transform: scale(0.95); }
 
+        /* ===== QR-код для печати ===== */
+        .print-qr-wrapper {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            text-align: center;
+            z-index: 9999;
+        }
+        .print-qr-wrapper canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        .print-qr-label {
+            font-size: 0.65rem;
+            color: #666;
+            margin-top: 4px;
+            line-height: 1.2;
+        }
+
         @media print {
             .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
             body { padding: 0; background: #fff; }
-            .container { display: block !important; page-break-after: always; box-shadow: none; padding: 0; }
+            .container { display: block !important; page-break-after: always; box-shadow: none; padding: 0; position: relative; }
             .container.search-mode.hidden-by-search { display: block !important; }
             .editable-name { cursor: default; }
             .editable-name:hover { background: transparent; }
+            .print-qr-wrapper { display: block !important; }
         }
 
         @media (max-width: 768px) {
@@ -926,6 +949,12 @@
     </table>
 </div>
 
+<!-- ===== QR-код для печати ===== -->
+<div class="print-qr-wrapper" id="printQrWrapper">
+    <div id="printQrCode"></div>
+    <div class="print-qr-label">Отсканируй для открытия<br>актуальной версии щита</div>
+</div>
+
 <!-- ===== Щит у Ворот ===== -->
 <div class="container" id="vorota">
     <h1>🚧 Щит у ворот</h1>
@@ -959,12 +988,26 @@ function printShield(containerId) {
     printStyle.id = 'print-style';
     printStyle.textContent = '@media print { .nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box { display: none !important; } }';
     document.head.appendChild(printStyle);
+    // Генерируем QR-код со ссылкой на сайт
+    var qrContainer = document.getElementById('printQrCode');
+    qrContainer.innerHTML = '';
+    try {
+        new QRCode(qrContainer, {
+            text: window.location.href.split('?')[0],
+            width: 80,
+            height: 80,
+            colorDark: '#333333',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } catch(e) { console.warn('QR generation error:', e); }
     // Открываем окно печати
     window.print();
     // Удаляем временный стиль
     setTimeout(function() {
         var s = document.getElementById('print-style');
         if (s) s.remove();
+        qrContainer.innerHTML = '';
     }, 1000);
 }
 
