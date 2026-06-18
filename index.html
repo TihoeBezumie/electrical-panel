@@ -977,41 +977,56 @@
 <script>
 // ===== PDF Print =====
 function printShield(containerId) {
-    // Запоминаем, какой щит был активен до печати
-    var prevActive = document.querySelector('.container.active');
-    var prevId = prevActive ? prevActive.id : 'garage';
-    // Показываем только нужный контейнер
-    document.querySelectorAll('.container').forEach(function(c) {
-        c.classList.remove('active');
-        if (c.id === containerId) {
-            c.classList.add('active');
-        }
+    // Находим контейнер щита
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    // Клонируем содержимое щита (заголовок + все таблицы)
+    var content = container.innerHTML;
+    var title = container.querySelector('h1');
+    var titleHTML = title ? title.outerHTML : '<h1>Щит</h1>';
+    // Собираем CSS из основного документа
+    var styles = '';
+    document.querySelectorAll('style').forEach(function(s) {
+        styles += s.innerHTML + '\n';
     });
-    // Генерируем QR-код со ссылкой на сайт
-    var qrContainer = document.getElementById('printQrCode');
-    qrContainer.innerHTML = '';
-    try {
-        new QRCode(qrContainer, {
-            text: window.location.href.split('?')[0],
-            width: 80,
-            height: 80,
-            colorDark: '#333333',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    } catch(e) { console.warn('QR generation error:', e); }
-    // Открываем окно печати с небольшой задержкой, чтобы DOM обновился
-    setTimeout(function() {
-        window.print();
-        // После печати возвращаем предыдущий активный щит
-        document.querySelectorAll('.container').forEach(function(c) {
-            c.classList.remove('active');
-            if (c.id === prevId) {
-                c.classList.add('active');
-            }
-        });
-        qrContainer.innerHTML = '';
-    }, 100);
+    // Ссылка на сайт для QR
+    var siteUrl = window.location.href.split('?')[0];
+    // Создаём HTML для нового окна
+    var printHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+        '<title>Печать щита</title>' +
+        '<style>' + styles + '</style>' +
+        '<style>' +
+        'body { padding: 20px; background: #fff; }' +
+        '.container { display: block !important; max-width: 100%; box-shadow: none; padding: 0; }' +
+        '.nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box, .print-qr-wrapper { display: none !important; }' +
+        '.status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }' +
+        '.editable-name { cursor: default; }' +
+        '.editable-name:hover { background: transparent; }' +
+        '@page { size: A4; margin: 15mm; }' +
+        '@media print { body { padding: 0; } }' +
+        '.print-only-qr { position: fixed; bottom: 20px; right: 20px; text-align: center; }' +
+        '.print-only-qr canvas { display: block; margin: 0 auto; }' +
+        '.print-only-qr-label { font-size: 0.65rem; color: #666; margin-top: 4px; }' +
+        '</style>' +
+        '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>' +
+        '</head><body>' +
+        '<div class="container active">' + titleHTML + content.replace(/<h1[^>]*>.*?<\/h1>/, '') +
+        '</div>' +
+        '<div class="print-only-qr" id="printQrContainer"><div id="printQrCode"></div><div class="print-only-qr-label">Отсканируй для открытия<br>актуальной версии щита</div></div>' +
+        '<script>' +
+        'try { new QRCode(document.getElementById("printQrCode"), { text: "' + siteUrl + '", width: 80, height: 80, colorDark: "#333333", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); } catch(e) {}' +
+        'window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); };' +
+        '<\/script>' +
+        '</body></html>';
+    // Открываем новое окно
+    var printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+        printWindow.document.write(printHTML);
+        printWindow.document.close();
+    } else {
+        // Если блокировщик всплывающих окон — fallback на старый метод
+        alert('Пожалуйста, разрешите всплывающие окна для печати PDF.');
+    }
 }
 
 // ===== iOS detection =====
