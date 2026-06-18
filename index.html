@@ -28,6 +28,7 @@
     var db = firebase.database();
     var syncRef = db.ref('panelState');
     var isSyncing = false; // флаг, чтобы не зациклиться
+    var commentsCache = {}; // кэш комментариев (синхронизируется через Firebase)
 
     // ===== Версия приложения =====
     // Меняй APP_VERSION каждый раз, когда меняешь структуру HTML (добавляешь/удаляешь строки, таблицы, секции).
@@ -1332,8 +1333,8 @@ function getCommentText(btn) {
     var table = btn.closest('table');
     var tables = container ? container.querySelectorAll('table') : [];
     var tableIndex = Array.from(tables).indexOf(table);
-    var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
-    try { return localStorage.getItem(key) || ''; } catch(e) { return ''; }
+    var key = containerId + '_t' + tableIndex + '_n' + num;
+    return commentsCache[key] || '';
 }
 
 function saveComment(textarea) {
@@ -1347,17 +1348,15 @@ function saveComment(textarea) {
     var table = textarea.closest('table');
     var tables = container ? container.querySelectorAll('table') : [];
     var tableIndex = Array.from(tables).indexOf(table);
+    var key = containerId + '_t' + tableIndex + '_n' + num;
 
-    var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
-    try {
-        if (comment) {
-            localStorage.setItem(key, comment);
-            btn.classList.add('has-comment');
-        } else {
-            localStorage.removeItem(key);
-            btn.classList.remove('has-comment');
-        }
-    } catch(e) {}
+    if (comment) {
+        commentsCache[key] = comment;
+        btn.classList.add('has-comment');
+    } else {
+        delete commentsCache[key];
+        btn.classList.remove('has-comment');
+    }
 
     // Show/hide comment text below
     var commentText = textarea.parentNode.querySelector('.comment-text');
@@ -1374,6 +1373,8 @@ function saveComment(textarea) {
 
     // Закрываем окно ввода
     closeComment(textarea);
+    // Сохраняем в Firebase через saveState
+    saveState();
 }
 
 function loadComments() {
@@ -1386,21 +1387,18 @@ function loadComments() {
         var table = btn.closest('table');
         var tables = container ? container.querySelectorAll('table') : [];
         var tableIndex = Array.from(tables).indexOf(table);
-        var key = 'comment_' + containerId + '_t' + tableIndex + '_n' + num;
-        try {
-            var saved = localStorage.getItem(key);
-            if (saved) {
-                btn.classList.add('has-comment');
-                // Show comment text
-                var existing = btn.parentNode.querySelector('.comment-text');
-                if (!existing) {
-                    var ct = document.createElement('span');
-                    ct.className = 'comment-text';
-                    btn.parentNode.appendChild(ct);
-                    ct.textContent = saved;
-                }
+        var key = containerId + '_t' + tableIndex + '_n' + num;
+        var saved = commentsCache[key];
+        if (saved) {
+            btn.classList.add('has-comment');
+            var existing = btn.parentNode.querySelector('.comment-text');
+            if (!existing) {
+                var ct = document.createElement('span');
+                ct.className = 'comment-text';
+                btn.parentNode.appendChild(ct);
+                ct.textContent = saved;
             }
-        } catch(e) {}
+        }
     });
 }
 
@@ -1473,6 +1471,42 @@ function listenFirebase() {
                     });
                 });
             }
+            // Применяем комментарии из Firebase
+            commentsCache = {};
+            document.querySelectorAll('.comment-toggle').forEach(function(btn) {
+                btn.classList.remove('has-comment');
+                var ct = btn.parentNode.querySelector('.comment-text');
+                if (ct) ct.remove();
+            });
+            if (data.comments) {
+                data.comments.forEach(function(c) {
+                    var container = document.getElementById(c.container);
+                    if (!container) return;
+                    var tables = container.querySelectorAll('table');
+                    var targetTable = (c.tableIndex !== undefined && tables[c.tableIndex]) ? tables[c.tableIndex] : null;
+                    var rows = targetTable ? targetTable.querySelectorAll('tbody tr') : container.querySelectorAll('tbody tr');
+                    rows.forEach(function(row) {
+                        var numCell = row.querySelector('.col-number');
+                        if (numCell && numCell.textContent.trim() === c.num) {
+                            var btn = row.querySelector('.comment-toggle');
+                            if (btn && c.text) {
+                                var key = c.container + '_t' + c.tableIndex + '_n' + c.num;
+                                commentsCache[key] = c.text;
+                                btn.classList.add('has-comment');
+                                var existing = btn.parentNode.querySelector('.comment-text');
+                                if (!existing) {
+                                    var ct = document.createElement('span');
+                                    ct.className = 'comment-text';
+                                    btn.parentNode.appendChild(ct);
+                                    ct.textContent = c.text;
+                                } else {
+                                    existing.textContent = c.text;
+                                }
+                            }
+                        }
+                    });
+                });
+            }
             isSyncing = false;
         });
     } catch(e) { console.warn('Firebase listen error:', e); isSyncing = false; }
@@ -1480,7 +1514,7 @@ function listenFirebase() {
 
 // ===== Save/Load State =====
 function saveState() {
-    var state = { statuses: [], names: [], reserves: [] };
+    var state = { statuses: [], names: [], reserves: [], comments: [] };
 
     document.querySelectorAll('.status-indicator').forEach(function(el) {
         var row = el.closest('tr');
@@ -1520,6 +1554,19 @@ function saveState() {
         var tables = container ? container.querySelectorAll('table') : [];
         var tableIndex = Array.from(tables).indexOf(table);
         state.reserves.push({ container: containerId, tableIndex: tableIndex, num: num, checked: cb.checked });
+    });
+
+    // Собираем комментарии из кэша
+    Object.keys(commentsCache).forEach(function(key) {
+        if (!commentsCache[key]) return;
+        var match = key.match(/^(.+)_t(\d+)_n(.+)$/);
+        if (!match) return;
+        state.comments.push({
+            container: match[1],
+            tableIndex: parseInt(match[2]),
+            num: match[3],
+            text: commentsCache[key]
+        });
     });
 
     try { localStorage.setItem('panelState', JSON.stringify(state)); } catch(e) {}
