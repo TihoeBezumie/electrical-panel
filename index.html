@@ -553,8 +553,9 @@
         @media print {
             .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
             body { padding: 0; background: #fff; }
-            .container { display: block !important; page-break-after: always; box-shadow: none; padding: 0; position: relative; }
-            .container.search-mode.hidden-by-search { display: block !important; }
+            .container { display: none !important; box-shadow: none; padding: 0; }
+            .container.active { display: block !important; page-break-after: avoid; }
+            .container.search-mode.hidden-by-search { display: none !important; }
             .editable-name { cursor: default; }
             .editable-name:hover { background: transparent; }
             .print-qr-wrapper { display: block !important; }
