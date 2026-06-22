@@ -14,8 +14,6 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- QRCode.js -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -532,26 +530,6 @@
         .pdf-btn:hover { transform: scale(1.1); opacity: 1; }
         .pdf-btn:active { transform: scale(0.95); }
 
-        /* ===== QR-код для печати ===== */
-        .print-qr-wrapper {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            text-align: center;
-            z-index: 9999;
-        }
-        .print-qr-wrapper canvas {
-            display: block;
-            margin: 0 auto;
-        }
-        .print-qr-label {
-            font-size: 0.65rem;
-            color: #666;
-            margin-top: 4px;
-            line-height: 1.2;
-        }
-
         @media print {
             .nav-panel, .theme-toggle-wrapper, .search-wrapper, .status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }
             body { padding: 0; background: #fff; }
@@ -560,7 +538,6 @@
             .container.search-mode.hidden-by-search { display: none !important; }
             .editable-name { cursor: default; }
             .editable-name:hover { background: transparent; }
-            .print-qr-wrapper { display: block !important; }
         }
 
         @media (max-width: 768px) {
@@ -1078,8 +1055,6 @@ function printShield(containerId) {
         var vb = sym ? (sym.getAttribute('viewBox') || '0 0 64 64') : '0 0 64 64';
         return '<svg class="svg-icon" viewBox="' + vb + '" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>';
     });
-    // Ссылка на сайт для QR — с хешем на конкретный щит
-    var siteUrl = window.location.href.split('?')[0] + '?v=' + APP_VERSION + '#' + containerId;
     // Создаём HTML для нового окна
     var printHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
         '<title>Печать щита</title>' +
@@ -1087,23 +1062,17 @@ function printShield(containerId) {
         '<style>' +
         'body { padding: 20px; background: #fff; }' +
         '.container { display: block !important; max-width: 100%; box-shadow: none; padding: 0; }' +
-        '.nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box, .print-qr-wrapper { display: none !important; }' +
+        '.nav-panel, .theme-toggle-wrapper, .search-wrapper, .pdf-btn, .comment-toggle, .comment-box { display: none !important; }' +
         '.status-indicator, .reserve-checkbox, .editable-name input { display: none !important; }' +
         '.editable-name { cursor: default; }' +
         '.editable-name:hover { background: transparent; }' +
         '@page { size: A4; margin: 15mm; }' +
         '@media print { body { padding: 0; } }' +
-        '.print-only-qr { position: fixed; bottom: 20px; right: 20px; text-align: center; }' +
-        '.print-only-qr canvas { display: block; margin: 0 auto; }' +
-        '.print-only-qr-label { font-size: 0.65rem; color: #666; margin-top: 4px; }' +
         '</style>' +
-        '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>' +
         '</head><body>' +
         '<div class="container active">' + titleHTML + content.replace(/<h1[^>]*>.*?<\/h1>/, '') +
         '</div>' +
-        '<div class="print-only-qr" id="printQrContainer"><div id="printQrCode"></div><div class="print-only-qr-label">Отсканируй для перехода<br>к этому щиту</div></div>' +
         '<script>' +
-        'try { new QRCode(document.getElementById("printQrCode"), { text: "' + siteUrl + '", width: 80, height: 80, colorDark: "#333333", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); } catch(e) {}' +
         'window.onload = function() { setTimeout(function() { window.print(); window.close(); }, 300); };' +
         '<\/script>' +
         '</body></html>';
