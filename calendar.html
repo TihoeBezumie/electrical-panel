@@ -280,7 +280,7 @@
 
         .object-select-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
@@ -301,23 +301,34 @@
             border-color: var(--accent);
         }
 
-        .object-select-row .add-btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
+        .object-select-row .obj-btn {
             width: 34px;
             height: 34px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
+            transition: all 0.2s;
             flex-shrink: 0;
+            border: none;
         }
 
-        .object-select-row .add-btn:hover { background: var(--accent-hover); }
+        .object-select-row .obj-btn.add {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .object-select-row .obj-btn.add:hover { background: var(--accent-hover); }
+
+        .object-select-row .obj-btn.remove {
+            background: var(--danger);
+            color: #fff;
+            opacity: 0.7;
+        }
+
+        .object-select-row .obj-btn.remove:hover { opacity: 1; }
 
         /* ===== Employees ===== */
         .employees-section {
@@ -615,7 +626,8 @@
         <label>Объект</label>
         <div class="object-select-row">
             <select id="objectSelect" onchange="onObjectChange()"></select>
-            <button class="add-btn" onclick="openAddObjectModal()" title="Добавить объект">+</button>
+            <button class="obj-btn remove" onclick="removeCurrentObject()" title="Удалить объект">✕</button>
+            <button class="obj-btn add" onclick="openAddObjectModal()" title="Добавить объект">+</button>
         </div>
     </div>
 
@@ -896,7 +908,7 @@ function renderEmployees() {
         var paidText = emp.paid ? 'Оплачено ✓' : 'Не оплачено';
         html += '<div class="employee-row">' +
             '<input type="checkbox" ' + checked + ' onchange="toggleWorked(\'' + name.replace(/'/g, "\\'") + '\', this)">' +
-            '<span class="emp-name">' + name + '</span>' +
+            '<span class="emp-name" ondblclick="renameEmployee(\'' + name.replace(/'/g, "\\'") + '\')">' + name + '</span>' +
             '<button class="emp-status ' + paidClass + '" onclick="togglePaid(\'' + name.replace(/'/g, "\\'") + '\')">' + paidText + '</button>' +
             '<button class="remove-emp" onclick="removeEmployeeFromDay(\'' + name.replace(/'/g, "\\'") + '\')" title="Убрать">✕</button>' +
             '</div>';
@@ -1095,6 +1107,66 @@ function confirmAddObject() {
     } else {
         alert('Объект "' + name + '" уже есть');
     }
+}
+
+// ===== Rename Employee (double-click) =====
+function renameEmployee(oldName) {
+    var newName = prompt('Новое имя для "' + oldName + '":', oldName);
+    if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+    newName = newName.trim();
+
+    var idx = employees.indexOf(oldName);
+    if (idx === -1) return;
+
+    // Проверяем, нет ли уже такого имени
+    if (employees.indexOf(newName) !== -1) {
+        alert('Сотрудник с именем "' + newName + '" уже существует');
+        return;
+    }
+
+    // Меняем имя в списке
+    employees[idx] = newName;
+
+    // Меняем имя во всех днях
+    Object.keys(daysData).forEach(function(key) {
+        var day = daysData[key];
+        if (day.employees && day.employees[oldName] !== undefined) {
+            day.employees[newName] = day.employees[oldName];
+            delete day.employees[oldName];
+        }
+    });
+
+    renderEmployees();
+    renderCalendar();
+    syncToFirebase();
+}
+
+// ===== Remove Current Object (from select) =====
+function removeCurrentObject() {
+    var sel = document.getElementById('objectSelect');
+    var obj = sel.value;
+    if (!obj) {
+        alert('Сначала выберите объект для удаления');
+        return;
+    }
+    if (!confirm('Удалить объект "' + obj + '"?')) return;
+
+    var idx = objects.indexOf(obj);
+    if (idx > -1) objects.splice(idx, 1);
+
+    // Удаляем из всех дней
+    Object.keys(daysData).forEach(function(key) {
+        if (daysData[key].object === obj) {
+            daysData[key].object = '';
+        }
+    });
+
+    // Обновляем select
+    sel.querySelector('option[value="' + obj.replace(/"/g, '"') + '"]').remove();
+    sel.value = '';
+
+    renderCalendar();
+    syncToFirebase();
 }
 
 // ===== Firebase Sync =====
