@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Календарь">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a202c">
+    <title>📅 Личный календарь</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #333;
+            --text-secondary: #718096;
+            --border: #dee2e6;
+            --accent: #4299e1;
+            --accent-hover: #3182ce;
+            --today-bg: #ebf8ff;
+            --today-border: #4299e1;
+            --selected-bg: #bee3f8;
+            --header-bg: #2c3e50;
+            --header-text: #fff;
+            --note-bg: #fffaf0;
+            --note-border: #fbd38d;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a202c;
+            --card: #2d3748;
+            --text: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border: #4a5568;
+            --accent: #63b3ed;
+            --accent-hover: #4299e1;
+            --today-bg: #2a4365;
+            --today-border: #63b3ed;
+            --selected-bg: #2c5282;
+            --header-bg: #1a202c;
+            --header-text: #e2e8f0;
+            --note-bg: #5a4a1a;
+            --note-border: #b7791f;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: background 0.3s;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            color: var(--text);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+        }
+
+        .calendar-wrapper {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--header-bg);
+            color: var(--header-text);
+            transition: background 0.3s;
+        }
+
+        .calendar-nav .month-year {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .nav-arrow {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .nav-arrow:active {
+            transform: scale(0.9);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+
+        .day-header {
+            background: var(--card);
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .day-cell {
+            background: var(--card);
+            min-height: 60px;
+            padding: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .day-cell:hover {
+            background: var(--selected-bg);
+        }
+
+        .day-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .day-cell.today {
+            background: var(--today-bg);
+            border: 2px solid var(--today-border);
+        }
+
+        .day-cell.selected {
+            background: var(--selected-bg);
+        }
+
+        .day-number {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .day-cell.today .day-number {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .day-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-top: 2px;
+        }
+
+        /* ===== Note Panel ===== */
+        .note-panel {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 16px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 20px;
+            display: none;
+            transition: background 0.3s;
+        }
+
+        .note-panel.open {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .note-panel .note-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .note-panel .note-date strong {
+            color: var(--text);
+        }
+
+        .note-panel textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: var(--card);
+            color: var(--text);
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .note-panel textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+        }
+
+        .note-panel .note-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+
+        .note-panel .note-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-delete {
+            background: #fc8181;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            background: #f56565;
+        }
+
+        .btn-close {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-close:hover {
+            opacity: 0.8;
+        }
+
+        .note-panel .saved-note {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--note-bg);
+            border-left: 4px solid var(--note-border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text);
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .header { padding: 12px 16px; }
+            .calendar-nav { padding: 12px 16px; }
+            .calendar-nav .month-year { font-size: 1rem; }
+            .day-cell { min-height: 48px; padding: 4px; }
+            .day-number { font-size: 0.75rem; width: 24px; height: 24px; }
+            .note-panel { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📅 Личный календарь</h1>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+</div>
+
+<div class="calendar-wrapper">
+    <div class="calendar-nav">
+        <button class="nav-arrow" onclick="prevMonth()">‹</button>
+        <span class="month-year" id="monthYear"></span>
+        <button class="nav-arrow" onclick="nextMonth()">›</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid">
+        <div class="day-header">Пн</div>
+        <div class="day-header">Вт</div>
+        <div class="day-header">Ср</div>
+        <div class="day-header">Чт</div>
+        <div class="day-header">Пт</div>
+        <div class="day-header">Сб</div>
+        <div class="day-header">Вс</div>
+    </div>
+</div>
+
+<div class="note-panel" id="notePanel">
+    <div class="note-date" id="noteDate"></div>
+    <textarea id="noteTextarea" placeholder="Напишите заметку на этот день..."></textarea>
+    <div class="note-actions">
+        <button class="btn-close" onclick="closeNote()">Отмена</button>
+        <button class="btn-delete" id="deleteNoteBtn" onclick="deleteNote()" style="display:none;">Удалить</button>
+        <button class="btn-save" onclick="saveNote()">Сохранить</button>
+    </div>
+    <div class="saved-note" id="savedNote" style="display:none;"></div>
+</div>
+
+<div class="footer">
+    <a href="https://tihoebezumie.github.io/electrical-panel/" target="_blank">⚡ Панель электрощитов</a>
+</div>
+
+<script>
+// ===== Firebase =====
+var firebaseConfig = {
+    databaseURL: "https://shilds-646d8-default-rtdb.firebaseio.com/"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var notesRef = db.ref('calendarNotes');
+
+// ===== State =====
+var currentDate = new Date();
+var currentYear = currentDate.getFullYear();
+var currentMonth = currentDate.getMonth();
+var selectedDate = null; // { year, month, day }
+var notesCache = {}; // key: "YYYY-MM-DD", value: text
+var isSyncing = false;
+
+// ===== Theme =====
+function toggleTheme() {
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme');
+    var newTheme = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', newTheme);
+    try { localStorage.setItem('calendarTheme', newTheme); } catch(e) {}
+    document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+}
+
+(function() {
+    try {
+        var saved = localStorage.getItem('calendarTheme');
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeToggle').textContent = '☀️';
+        }
+    } catch(e) {}
+})();
+
+// ===== Calendar Render =====
+var monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function renderCalendar() {
+    var grid = document.getElementById('calendarGrid');
+    var header = document.getElementById('monthYear');
+    header.textContent = monthNames[currentMonth] + ' ' + currentYear;
+
+    // Удаляем старые ячейки (оставляем заголовки)
+    while (grid.children.length > 7) {
+        grid.removeChild(grid.lastChild);
+    }
+
+    var firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0=Вс
+    var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    var daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+    // Смещение: Пн=0, Вт=1... Вс=6
+    var startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+
+    var today = new Date();
+    var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+    // Прошлый месяц
+    for (var i = startOffset - 1; i >= 0; i--) {
+        var day = daysInPrevMonth - i;
+        var cell = createDayCell(day, true);
+        grid.appendChild(cell);
+    }
+
+    // Текущий месяц
+    for (var d = 1; d <= daysInMonth; d++) {
+        var dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var cell = createDayCell(d, false, dateStr === todayStr, dateStr);
+        grid.appendChild(cell);
+    }
+
+    // Следующий месяц
+    var totalCells = startOffset + daysInMonth;
+    var remaining = 7 - (totalCells % 7);
+    if (remaining < 7) {
+        for (var j = 1; j <= remaining; j++) {
+            var cell = createDayCell(j, true);
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function createDayCell(day, isOther, isToday, dateStr) {
+    var cell = document.createElement('div');
+    cell.className = 'day-cell';
+    if (isOther) cell.classList.add('other-month');
+    if (isToday) cell.classList.add('today');
+
+    var num = document.createElement('div');
+    num.className = 'day-number';
+    num.textContent = day;
+    cell.appendChild(num);
+
+    // Точка если есть заметка
+    if (dateStr && notesCache[dateStr]) {
+        var dot = document.createElement('div');
+        dot.className = 'day-dot';
+        cell.appendChild(dot);
+    }
+
+    cell.addEventListener('click', function() {
+        var year = isOther ? (day > 15 ? (currentMonth === 0 ? currentYear - 1 : currentYear) : (currentMonth === 11 ? currentYear + 1 : currentYear)) : currentYear;
+        var month = isOther ? (day > 15 ? (currentMonth === 0 ? 11 : currentMonth - 1) : (currentMonth === 11 ? 0 : currentMonth + 1)) : currentMonth;
+        selectDate(year, month, day);
+    });
+
+    if (dateStr && selectedDate && selectedDate.dateStr === dateStr) {
+        cell.classList.add('selected');
+    }
+
+    return cell;
+}
+
+// ===== Date Selection =====
+function selectDate(year, month, day) {
+    selectedDate = {
+        year: year,
+        month: month,
+        day: day,
+        dateStr: year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0')
+    };
+
+    // Обновляем выделение
+    document.querySelectorAll('.day-cell.selected').forEach(function(el) { el.classList.remove('selected'); });
+    // Находим и выделяем ячейку
+    var cells = document.querySelectorAll('.day-cell:not(.other-month)');
+    cells.forEach(function(cell) {
+        var num = cell.querySelector('.day-number');
+        if (num && parseInt(num.textContent) === day) {
+            cell.classList.add('selected');
+        }
+    });
+
+    openNotePanel();
+}
+
+// ===== Note Panel =====
+function openNotePanel() {
+    if (!selectedDate) return;
+    var panel = document.getElementById('notePanel');
+    var dateDisplay = document.getElementById('noteDate');
+    var textarea = document.getElementById('noteTextarea');
+    var savedNote = document.getElementById('savedNote');
+    var deleteBtn = document.getElementById('deleteNoteBtn');
+
+    var d = selectedDate;
+    var dateObj = new Date(d.year, d.month, d.day);
+    var weekdays = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+    var weekday = weekdays[dateObj.getDay()];
+
+    dateDisplay.innerHTML = '<strong>' + d.day + ' ' + monthNames[d.month] + ' ' + d.year + '</strong> — ' + weekday;
+
+    var saved = notesCache[d.dateStr] || '';
+    if (saved) {
+        savedNote.textContent = saved;
+        savedNote.style.display = 'block';
+        textarea.value = saved;
+        deleteBtn.style.display = 'inline-block';
+    } else {
+        savedNote.style.display = 'none';
+        textarea.value = '';
+        deleteBtn.style.display = 'none';
+    }
+
+    panel.classList.add('open');
+    textarea.focus();
+}
+
+function closeNote() {
+    document.getElementById('notePanel').classList.remove('open');
+    selectedDate = null;
+}
+
+function saveNote() {
+    if (!selectedDate) return;
+    var text = document.getElementById('noteTextarea').value.trim();
+    var key = selectedDate.dateStr;
+
+    if (text) {
+        notesCache[key] = text;
+    } else {
+        delete notesCache[key];
+    }
+
+    // Обновляем точку на календаре
+    updateDots();
+    // Сохраняем в Firebase
+    syncNotesToFirebase();
+    // Обновляем панель
+    openNotePanel();
+}
+
+function deleteNote() {
+    if (!selectedDate) return;
+    var key = selectedDate.dateStr;
+    delete notesCache[key];
+    document.getElementById('noteTextarea').value = '';
+    document.getElementById('savedNote').style.display = 'none';
+    document.getElementById('deleteNoteBtn').style.display = 'none';
+    updateDots();
+    syncNotesToFirebase();
+}
+
+function updateDots() {
+    document.querySelectorAll('.day-dot').forEach(function(d) { d.remove(); });
+    document.querySelectorAll('.day-cell:not(.other-month)').forEach(function(cell) {
+        var num = cell.querySelector('.day-number');
+        if (!num) return;
+        var day = parseInt(num.textContent);
+        var dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+        if (notesCache[dateStr]) {
+            var dot = document.createElement('div');
+            dot.className = 'day-dot';
+            cell.appendChild(dot);
+        }
+    });
+}
+
+// ===== Firebase Sync =====
+function syncNotesToFirebase() {
+    if (isSyncing) return;
+    try {
+        notesRef.set(notesCache);
+    } catch(e) { console.warn('Firebase sync error:', e); }
+}
+
+function listenFirebase() {
+    try {
+        notesRef.on('value', function(snapshot) {
+            var data = snapshot.val();
+            if (!data) return;
+            isSyncing = true;
+            notesCache = {};
+            Object.keys(data).forEach(function(key) {
+                if (data[key]) {
+                    notesCache[key] = data[key];
+                }
+            });
+            // Перерисовываем календарь
+            renderCalendar();
+            // Если открыта панель заметки — обновляем
+            if (selectedDate && document.getElementById('notePanel').classList.contains('open')) {
+                openNotePanel();
+            }
+            isSyncing = false;
+        });
+    } catch(e) { console.warn('Firebase listen error:', e); isSyncing = false; }
+}
+
+// ===== Month Navigation =====
+function prevMonth() {
+    currentMonth--;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    renderCalendar();
+}
+
+function nextMonth() {
+    currentMonth++;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderCalendar();
+}
+
+// ===== Init =====
+renderCalendar();
+listenFirebase();
+</script>
+</body>
+</html>
