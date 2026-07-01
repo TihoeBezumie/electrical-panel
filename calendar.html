@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Календарь">
+    <meta name="apple-mobile-web-app-title" content="Табель">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1a202c">
-    <title>📅 Личный календарь</title>
+    <title>📋 Табель сотрудников</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -33,8 +33,9 @@
             --selected-bg: #bee3f8;
             --header-bg: #2c3e50;
             --header-text: #fff;
-            --note-bg: #fffaf0;
-            --note-border: #fbd38d;
+            --success: #48bb78;
+            --danger: #fc8181;
+            --warning: #ecc94b;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
         }
@@ -52,8 +53,9 @@
             --selected-bg: #2c5282;
             --header-bg: #1a202c;
             --header-text: #e2e8f0;
-            --note-bg: #5a4a1a;
-            --note-border: #b7791f;
+            --success: #68d391;
+            --danger: #fc8181;
+            --warning: #ecc94b;
             --shadow: 0 4px 6px rgba(0,0,0,0.3);
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
         }
@@ -76,8 +78,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 16px 20px;
+            margin-bottom: 16px;
+            padding: 14px 18px;
             background: var(--card);
             border-radius: 12px;
             box-shadow: var(--shadow-sm);
@@ -85,22 +87,27 @@
         }
 
         .header h1 {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: var(--text);
         }
 
-        .theme-toggle {
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
             background: none;
             border: 2px solid var(--border);
             border-radius: 8px;
             padding: 6px 10px;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 0.85rem;
             transition: all 0.2s;
             color: var(--text);
         }
 
-        .theme-toggle:hover {
+        .header-btn:hover {
             border-color: var(--accent);
         }
 
@@ -118,14 +125,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 20px;
+            padding: 14px 18px;
             background: var(--header-bg);
             color: var(--header-text);
             transition: background 0.3s;
         }
 
         .calendar-nav .month-year {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
         }
 
@@ -133,24 +140,19 @@
             background: rgba(255,255,255,0.15);
             border: none;
             color: #fff;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background 0.2s;
         }
 
-        .nav-arrow:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        .nav-arrow:active {
-            transform: scale(0.9);
-        }
+        .nav-arrow:hover { background: rgba(255,255,255,0.25); }
+        .nav-arrow:active { transform: scale(0.9); }
 
         .calendar-grid {
             display: grid;
@@ -162,9 +164,9 @@
 
         .day-header {
             background: var(--card);
-            padding: 10px 4px;
+            padding: 8px 4px;
             text-align: center;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
@@ -173,8 +175,8 @@
 
         .day-cell {
             background: var(--card);
-            min-height: 60px;
-            padding: 6px;
+            min-height: 52px;
+            padding: 4px;
             cursor: pointer;
             transition: background 0.2s;
             position: relative;
@@ -183,62 +185,50 @@
             align-items: center;
         }
 
-        .day-cell:hover {
-            background: var(--selected-bg);
-        }
-
-        .day-cell.other-month {
-            opacity: 0.3;
-        }
-
-        .day-cell.today {
-            background: var(--today-bg);
-            border: 2px solid var(--today-border);
-        }
-
-        .day-cell.selected {
-            background: var(--selected-bg);
-        }
+        .day-cell:hover { background: var(--selected-bg); }
+        .day-cell.other-month { opacity: 0.25; }
+        .day-cell.today { background: var(--today-bg); border: 2px solid var(--today-border); }
+        .day-cell.selected { background: var(--selected-bg); }
 
         .day-number {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text);
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
         }
 
-        .day-cell.today .day-number {
-            background: var(--accent);
-            color: #fff;
-        }
+        .day-cell.today .day-number { background: var(--accent); color: #fff; }
 
         .day-dot {
-            width: 5px;
-            height: 5px;
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
             background: var(--accent);
             margin-top: 2px;
         }
 
-        /* ===== Note Panel ===== */
-        .note-panel {
+        .day-dot.paid { background: var(--success); }
+        .day-dot.unpaid { background: var(--danger); }
+
+        /* ===== Day Panel ===== */
+        .day-panel {
             width: 100%;
             max-width: 500px;
-            margin-top: 16px;
+            margin-top: 14px;
             background: var(--card);
             border-radius: 12px;
             box-shadow: var(--shadow-sm);
-            padding: 20px;
+            padding: 18px;
             display: none;
             transition: background 0.3s;
         }
 
-        .note-panel.open {
+        .day-panel.open {
             display: block;
             animation: fadeIn 0.25s ease;
         }
@@ -248,45 +238,256 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .note-panel .note-date {
-            font-size: 0.9rem;
+        .day-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .day-panel .panel-date {
+            font-size: 0.95rem;
             color: var(--text-secondary);
+        }
+
+        .day-panel .panel-date strong { color: var(--text); }
+
+        .day-panel .panel-close {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+        }
+
+        .day-panel .panel-close:hover { color: var(--text); }
+
+        /* ===== Object Select ===== */
+        .object-section {
+            margin-bottom: 14px;
+        }
+
+        .object-section label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .object-select-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .object-select-row select {
+            flex: 1;
+            padding: 8px 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: var(--card);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .object-select-row select:focus {
+            border-color: var(--accent);
+        }
+
+        .object-select-row .add-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .object-select-row .add-btn:hover { background: var(--accent-hover); }
+
+        /* ===== Employees ===== */
+        .employees-section {
+            margin-bottom: 14px;
+        }
+
+        .employees-section .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 8px;
         }
 
-        .note-panel .note-date strong {
+        .employees-section .section-title label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .employees-section .section-title .add-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .employees-section .section-title .add-btn:hover { background: var(--accent-hover); }
+
+        .employee-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: background 0.2s;
+        }
+
+        .employee-row:hover {
+            background: rgba(66,153,225,0.06);
+        }
+
+        .employee-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .employee-row .emp-name {
+            flex: 1;
+            font-size: 0.9rem;
             color: var(--text);
         }
 
-        .note-panel textarea {
+        .employee-row .emp-status {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .emp-status.paid {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .emp-status.unpaid {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        [data-theme="dark"] .emp-status.paid {
+            background: #22543d;
+            color: #c6f6d5;
+        }
+
+        [data-theme="dark"] .emp-status.unpaid {
+            background: #742a2a;
+            color: #fed7d7;
+        }
+
+        .employee-row .remove-emp {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 2px 4px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .employee-row .remove-emp:hover { opacity: 1; }
+
+        .no-employees {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
             width: 100%;
-            min-height: 100px;
-            padding: 12px;
+            max-width: 380px;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal h2 {
+            font-size: 1rem;
+            margin-bottom: 14px;
+            color: var(--text);
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px 12px;
             border: 2px solid var(--border);
             border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: inherit;
+            font-size: 0.9rem;
             background: var(--card);
             color: var(--text);
-            resize: vertical;
             outline: none;
             transition: border-color 0.2s;
+            margin-bottom: 10px;
             box-sizing: border-box;
         }
 
-        .note-panel textarea:focus {
+        .modal input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
         }
 
-        .note-panel .note-actions {
+        .modal .modal-actions {
             display: flex;
             gap: 8px;
-            margin-top: 10px;
             justify-content: flex-end;
         }
 
-        .note-panel .note-actions button {
+        .modal .modal-actions button {
             padding: 8px 16px;
             border: none;
             border-radius: 8px;
@@ -296,74 +497,94 @@
             transition: all 0.2s;
         }
 
-        .btn-save {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .btn-save:hover {
-            background: var(--accent-hover);
-        }
-
-        .btn-delete {
-            background: #fc8181;
-            color: #fff;
-        }
-
-        .btn-delete:hover {
-            background: #f56565;
-        }
-
-        .btn-close {
+        .modal .btn-cancel {
             background: var(--border);
             color: var(--text);
         }
 
-        .btn-close:hover {
-            opacity: 0.8;
+        .modal .btn-cancel:hover { opacity: 0.8; }
+
+        .modal .btn-confirm {
+            background: var(--accent);
+            color: #fff;
         }
 
-        .note-panel .saved-note {
-            margin-top: 12px;
-            padding: 12px;
-            background: var(--note-bg);
-            border-left: 4px solid var(--note-border);
+        .modal .btn-confirm:hover { background: var(--accent-hover); }
+
+        .modal .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .modal .btn-danger:hover { opacity: 0.85; }
+
+        /* ===== Manage Lists ===== */
+        .manage-list {
+            margin-bottom: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .manage-list .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
             border-radius: 6px;
+            margin-bottom: 2px;
+        }
+
+        .manage-list .list-item:hover {
+            background: rgba(66,153,225,0.06);
+        }
+
+        .manage-list .list-item .item-name {
             font-size: 0.9rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            word-break: break-word;
             color: var(--text);
         }
 
+        .manage-list .list-item .item-remove {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 2px 6px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .manage-list .list-item .item-remove:hover { opacity: 1; }
+
         .footer {
-            margin-top: 20px;
-            font-size: 0.75rem;
+            margin-top: 16px;
+            font-size: 0.7rem;
             color: var(--text-secondary);
             text-align: center;
         }
 
-        .footer a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
         @media (max-width: 480px) {
             body { padding: 10px; }
-            .header { padding: 12px 16px; }
-            .calendar-nav { padding: 12px 16px; }
+            .header { padding: 10px 14px; }
+            .header h1 { font-size: 1rem; }
+            .calendar-nav { padding: 10px 14px; }
             .calendar-nav .month-year { font-size: 1rem; }
-            .day-cell { min-height: 48px; padding: 4px; }
-            .day-number { font-size: 0.75rem; width: 24px; height: 24px; }
-            .note-panel { padding: 16px; }
+            .day-cell { min-height: 42px; padding: 3px; }
+            .day-number { font-size: 0.7rem; width: 22px; height: 22px; }
+            .day-panel { padding: 14px; }
+            .employee-row { padding: 6px 8px; }
+            .employee-row .emp-name { font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>📅 Личный календарь</h1>
-    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+    <h1>📋 Табель сотрудников</h1>
+    <div class="header-actions">
+        <button class="header-btn" onclick="openManageModal()" title="Управление">⚙️</button>
+        <button class="header-btn" id="themeToggle" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+    </div>
 </div>
 
 <div class="calendar-wrapper">
@@ -383,15 +604,77 @@
     </div>
 </div>
 
-<div class="note-panel" id="notePanel">
-    <div class="note-date" id="noteDate"></div>
-    <textarea id="noteTextarea" placeholder="Напишите заметку на этот день..."></textarea>
-    <div class="note-actions">
-        <button class="btn-close" onclick="closeNote()">Отмена</button>
-        <button class="btn-delete" id="deleteNoteBtn" onclick="deleteNote()" style="display:none;">Удалить</button>
-        <button class="btn-save" onclick="saveNote()">Сохранить</button>
+<!-- ===== Day Panel ===== -->
+<div class="day-panel" id="dayPanel">
+    <div class="panel-header">
+        <div class="panel-date" id="panelDate"></div>
+        <button class="panel-close" onclick="closeDayPanel()">✕</button>
     </div>
-    <div class="saved-note" id="savedNote" style="display:none;"></div>
+
+    <div class="object-section">
+        <label>Объект</label>
+        <div class="object-select-row">
+            <select id="objectSelect" onchange="onObjectChange()"></select>
+            <button class="add-btn" onclick="openAddObjectModal()" title="Добавить объект">+</button>
+        </div>
+    </div>
+
+    <div class="employees-section">
+        <div class="section-title">
+            <label>Сотрудники</label>
+            <button class="add-btn" onclick="openAddEmployeeModal()" title="Добавить сотрудника">+</button>
+        </div>
+        <div id="employeesList"></div>
+    </div>
+</div>
+
+<!-- ===== Manage Modal ===== -->
+<div class="modal-overlay" id="manageModal">
+    <div class="modal">
+        <h2>⚙️ Управление</h2>
+
+        <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Сотрудники</label>
+        <div class="manage-list" id="manageEmployeesList"></div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+            <input type="text" id="addEmpInput" placeholder="Имя сотрудника" style="flex:1;margin-bottom:0;">
+            <button class="btn-confirm" onclick="addEmployeeFromManage()" style="padding:8px 12px;border:none;border-radius:8px;cursor:pointer;">+</button>
+        </div>
+
+        <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Объекты</label>
+        <div class="manage-list" id="manageObjectsList"></div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+            <input type="text" id="addObjInput" placeholder="Название объекта" style="flex:1;margin-bottom:0;">
+            <button class="btn-confirm" onclick="addObjectFromManage()" style="padding:8px 12px;border:none;border-radius:8px;cursor:pointer;">+</button>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeManageModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Add Employee Modal ===== -->
+<div class="modal-overlay" id="addEmpModal">
+    <div class="modal">
+        <h2>➕ Добавить сотрудника</h2>
+        <input type="text" id="newEmpName" placeholder="Имя сотрудника" onkeydown="if(event.key==='Enter')confirmAddEmployee()">
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeAddEmployeeModal()">Отмена</button>
+            <button class="btn-confirm" onclick="confirmAddEmployee()">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Add Object Modal ===== -->
+<div class="modal-overlay" id="addObjModal">
+    <div class="modal">
+        <h2>➕ Добавить объект</h2>
+        <input type="text" id="newObjName" placeholder="Название объекта" onkeydown="if(event.key==='Enter')confirmAddObject()">
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeAddObjectModal()">Отмена</button>
+            <button class="btn-confirm" onclick="confirmAddObject()">Добавить</button>
+        </div>
+    </div>
 </div>
 
 <div class="footer">
@@ -405,14 +688,19 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
-var notesRef = db.ref('calendarNotes');
+var dataRef = db.ref('timesheetData');
 
 // ===== State =====
 var currentDate = new Date();
 var currentYear = currentDate.getFullYear();
 var currentMonth = currentDate.getMonth();
-var selectedDate = null; // { year, month, day }
-var notesCache = {}; // key: "YYYY-MM-DD", value: text
+var selectedDate = null;
+
+// Основные данные
+var employees = ['Алексей', 'Дмитрий', 'Сергей']; // имена сотрудников
+var objects = ['Дом 45', 'Дом 46', 'Театр', 'Пруд', 'Бассейн']; // объекты
+var daysData = {}; // key: "YYYY-MM-DD" => { object: "...", employees: { "Имя": { worked: true, paid: false } } }
+
 var isSyncing = false;
 
 // ===== Theme =====
@@ -421,13 +709,13 @@ function toggleTheme() {
     var current = html.getAttribute('data-theme');
     var newTheme = current === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', newTheme);
-    try { localStorage.setItem('calendarTheme', newTheme); } catch(e) {}
+    try { localStorage.setItem('timesheetTheme', newTheme); } catch(e) {}
     document.getElementById('themeToggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
 }
 
 (function() {
     try {
-        var saved = localStorage.getItem('calendarTheme');
+        var saved = localStorage.getItem('timesheetTheme');
         if (saved === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
             document.getElementById('themeToggle').textContent = '☀️';
@@ -443,42 +731,32 @@ function renderCalendar() {
     var header = document.getElementById('monthYear');
     header.textContent = monthNames[currentMonth] + ' ' + currentYear;
 
-    // Удаляем старые ячейки (оставляем заголовки)
     while (grid.children.length > 7) {
         grid.removeChild(grid.lastChild);
     }
 
-    var firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0=Вс
+    var firstDay = new Date(currentYear, currentMonth, 1).getDay();
     var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     var daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
-
-    // Смещение: Пн=0, Вт=1... Вс=6
     var startOffset = (firstDay === 0) ? 6 : firstDay - 1;
 
     var today = new Date();
     var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
 
-    // Прошлый месяц
     for (var i = startOffset - 1; i >= 0; i--) {
-        var day = daysInPrevMonth - i;
-        var cell = createDayCell(day, true);
-        grid.appendChild(cell);
+        grid.appendChild(createDayCell(daysInPrevMonth - i, true, false, ''));
     }
 
-    // Текущий месяц
     for (var d = 1; d <= daysInMonth; d++) {
         var dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-        var cell = createDayCell(d, false, dateStr === todayStr, dateStr);
-        grid.appendChild(cell);
+        grid.appendChild(createDayCell(d, false, dateStr === todayStr, dateStr));
     }
 
-    // Следующий месяц
     var totalCells = startOffset + daysInMonth;
     var remaining = 7 - (totalCells % 7);
     if (remaining < 7) {
         for (var j = 1; j <= remaining; j++) {
-            var cell = createDayCell(j, true);
-            grid.appendChild(cell);
+            grid.appendChild(createDayCell(j, true, false, ''));
         }
     }
 }
@@ -494,11 +772,24 @@ function createDayCell(day, isOther, isToday, dateStr) {
     num.textContent = day;
     cell.appendChild(num);
 
-    // Точка если есть заметка
-    if (dateStr && notesCache[dateStr]) {
-        var dot = document.createElement('div');
-        dot.className = 'day-dot';
-        cell.appendChild(dot);
+    // Точка если есть данные
+    if (dateStr && daysData[dateStr]) {
+        var data = daysData[dateStr];
+        var hasWorked = false;
+        var allPaid = true;
+        var hasUnpaid = false;
+        Object.keys(data.employees || {}).forEach(function(name) {
+            var emp = data.employees[name];
+            if (emp && emp.worked) {
+                hasWorked = true;
+                if (!emp.paid) { allPaid = false; hasUnpaid = true; }
+            }
+        });
+        if (hasWorked) {
+            var dot = document.createElement('div');
+            dot.className = 'day-dot' + (allPaid ? ' paid' : ' unpaid');
+            cell.appendChild(dot);
+        }
     }
 
     cell.addEventListener('click', function() {
@@ -523,9 +814,7 @@ function selectDate(year, month, day) {
         dateStr: year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0')
     };
 
-    // Обновляем выделение
     document.querySelectorAll('.day-cell.selected').forEach(function(el) { el.classList.remove('selected'); });
-    // Находим и выделяем ячейку
     var cells = document.querySelectorAll('.day-cell:not(.other-month)');
     cells.forEach(function(cell) {
         var num = cell.querySelector('.day-number');
@@ -534,116 +823,313 @@ function selectDate(year, month, day) {
         }
     });
 
-    openNotePanel();
+    openDayPanel();
 }
 
-// ===== Note Panel =====
-function openNotePanel() {
+// ===== Day Panel =====
+function openDayPanel() {
     if (!selectedDate) return;
-    var panel = document.getElementById('notePanel');
-    var dateDisplay = document.getElementById('noteDate');
-    var textarea = document.getElementById('noteTextarea');
-    var savedNote = document.getElementById('savedNote');
-    var deleteBtn = document.getElementById('deleteNoteBtn');
-
+    var panel = document.getElementById('dayPanel');
+    var dateDisplay = document.getElementById('panelDate');
     var d = selectedDate;
     var dateObj = new Date(d.year, d.month, d.day);
     var weekdays = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
-    var weekday = weekdays[dateObj.getDay()];
+    dateDisplay.innerHTML = '<strong>' + d.day + ' ' + monthNames[d.month] + ' ' + d.year + '</strong> — ' + weekdays[dateObj.getDay()];
 
-    dateDisplay.innerHTML = '<strong>' + d.day + ' ' + monthNames[d.month] + ' ' + d.year + '</strong> — ' + weekday;
+    // Заполняем объекты
+    var objSelect = document.getElementById('objectSelect');
+    objSelect.innerHTML = '<option value="">— Не выбран —</option>';
+    objects.forEach(function(obj) {
+        var opt = document.createElement('option');
+        opt.value = obj;
+        opt.textContent = obj;
+        objSelect.appendChild(opt);
+    });
 
-    var saved = notesCache[d.dateStr] || '';
-    if (saved) {
-        savedNote.textContent = saved;
-        savedNote.style.display = 'block';
-        textarea.value = saved;
-        deleteBtn.style.display = 'inline-block';
+    var dayData = daysData[d.dateStr];
+    if (dayData && dayData.object) {
+        objSelect.value = dayData.object;
     } else {
-        savedNote.style.display = 'none';
-        textarea.value = '';
-        deleteBtn.style.display = 'none';
+        objSelect.value = '';
     }
 
+    renderEmployees();
     panel.classList.add('open');
-    textarea.focus();
 }
 
-function closeNote() {
-    document.getElementById('notePanel').classList.remove('open');
+function closeDayPanel() {
+    document.getElementById('dayPanel').classList.remove('open');
     selectedDate = null;
 }
 
-function saveNote() {
+function onObjectChange() {
     if (!selectedDate) return;
-    var text = document.getElementById('noteTextarea').value.trim();
-    var key = selectedDate.dateStr;
+    var obj = document.getElementById('objectSelect').value;
+    if (!daysData[selectedDate.dateStr]) {
+        daysData[selectedDate.dateStr] = { object: '', employees: {} };
+    }
+    daysData[selectedDate.dateStr].object = obj;
+    syncToFirebase();
+    renderCalendar();
+}
 
-    if (text) {
-        notesCache[key] = text;
-    } else {
-        delete notesCache[key];
+function renderEmployees() {
+    var container = document.getElementById('employeesList');
+    if (!selectedDate) { container.innerHTML = ''; return; }
+
+    if (employees.length === 0) {
+        container.innerHTML = '<div class="no-employees">Нет сотрудников. Добавьте через ⚙️</div>';
+        return;
     }
 
-    // Обновляем точку на календаре
-    updateDots();
-    // Сохраняем в Firebase
-    syncNotesToFirebase();
-    // Обновляем панель
-    openNotePanel();
+    var dayData = daysData[selectedDate.dateStr];
+    if (!dayData) {
+        daysData[selectedDate.dateStr] = { object: '', employees: {} };
+        dayData = daysData[selectedDate.dateStr];
+    }
+
+    var html = '';
+    employees.forEach(function(name) {
+        var emp = dayData.employees[name] || { worked: false, paid: false };
+        var checked = emp.worked ? 'checked' : '';
+        var paidClass = emp.paid ? 'paid' : 'unpaid';
+        var paidText = emp.paid ? 'Оплачено ✓' : 'Не оплачено';
+        html += '<div class="employee-row">' +
+            '<input type="checkbox" ' + checked + ' onchange="toggleWorked(\'' + name.replace(/'/g, "\\'") + '\', this)">' +
+            '<span class="emp-name">' + name + '</span>' +
+            '<button class="emp-status ' + paidClass + '" onclick="togglePaid(\'' + name.replace(/'/g, "\\'") + '\')">' + paidText + '</button>' +
+            '<button class="remove-emp" onclick="removeEmployeeFromDay(\'' + name.replace(/'/g, "\\'") + '\')" title="Убрать">✕</button>' +
+            '</div>';
+    });
+    container.innerHTML = html;
 }
 
-function deleteNote() {
+function toggleWorked(name, cb) {
     if (!selectedDate) return;
-    var key = selectedDate.dateStr;
-    delete notesCache[key];
-    document.getElementById('noteTextarea').value = '';
-    document.getElementById('savedNote').style.display = 'none';
-    document.getElementById('deleteNoteBtn').style.display = 'none';
-    updateDots();
-    syncNotesToFirebase();
+    var dayData = daysData[selectedDate.dateStr];
+    if (!dayData) {
+        daysData[selectedDate.dateStr] = { object: '', employees: {} };
+        dayData = daysData[selectedDate.dateStr];
+    }
+    if (!dayData.employees[name]) {
+        dayData.employees[name] = { worked: false, paid: false };
+    }
+    dayData.employees[name].worked = cb.checked;
+    syncToFirebase();
+    renderCalendar();
 }
 
-function updateDots() {
-    document.querySelectorAll('.day-dot').forEach(function(d) { d.remove(); });
-    document.querySelectorAll('.day-cell:not(.other-month)').forEach(function(cell) {
-        var num = cell.querySelector('.day-number');
-        if (!num) return;
-        var day = parseInt(num.textContent);
-        var dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-        if (notesCache[dateStr]) {
-            var dot = document.createElement('div');
-            dot.className = 'day-dot';
-            cell.appendChild(dot);
-        }
+function togglePaid(name) {
+    if (!selectedDate) return;
+    var dayData = daysData[selectedDate.dateStr];
+    if (!dayData || !dayData.employees[name]) return;
+    dayData.employees[name].paid = !dayData.employees[name].paid;
+    syncToFirebase();
+    renderEmployees();
+    renderCalendar();
+}
+
+function removeEmployeeFromDay(name) {
+    if (!selectedDate) return;
+    var dayData = daysData[selectedDate.dateStr];
+    if (dayData && dayData.employees[name]) {
+        delete dayData.employees[name];
+        syncToFirebase();
+        renderEmployees();
+        renderCalendar();
+    }
+}
+
+// ===== Manage Modal =====
+function openManageModal() {
+    document.getElementById('manageModal').classList.add('open');
+    renderManageLists();
+}
+
+function closeManageModal() {
+    document.getElementById('manageModal').classList.remove('open');
+}
+
+function renderManageLists() {
+    // Сотрудники
+    var empList = document.getElementById('manageEmployeesList');
+    empList.innerHTML = '';
+    employees.forEach(function(name) {
+        var div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = '<span class="item-name">' + name + '</span>' +
+            '<button class="item-remove" onclick="removeEmployee(\'' + name.replace(/'/g, "\\'") + '\')">✕</button>';
+        empList.appendChild(div);
+    });
+
+    // Объекты
+    var objList = document.getElementById('manageObjectsList');
+    objList.innerHTML = '';
+    objects.forEach(function(obj) {
+        var div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = '<span class="item-name">' + obj + '</span>' +
+            '<button class="item-remove" onclick="removeObject(\'' + obj.replace(/'/g, "\\'") + '\')">✕</button>';
+        objList.appendChild(div);
     });
 }
 
+function removeEmployee(name) {
+    var idx = employees.indexOf(name);
+    if (idx > -1) employees.splice(idx, 1);
+    // Удаляем из всех дней
+    Object.keys(daysData).forEach(function(key) {
+        if (daysData[key].employees && daysData[key].employees[name]) {
+            delete daysData[key].employees[name];
+        }
+    });
+    renderManageLists();
+    renderCalendar();
+    if (document.getElementById('dayPanel').classList.contains('open')) renderEmployees();
+    syncToFirebase();
+}
+
+function removeObject(name) {
+    var idx = objects.indexOf(name);
+    if (idx > -1) objects.splice(idx, 1);
+    // Удаляем из всех дней
+    Object.keys(daysData).forEach(function(key) {
+        if (daysData[key].object === name) {
+            daysData[key].object = '';
+        }
+    });
+    renderManageLists();
+    renderCalendar();
+    if (document.getElementById('dayPanel').classList.contains('open')) {
+        var sel = document.getElementById('objectSelect');
+        sel.querySelector('option[value="' + name.replace(/"/g, '"') + '"]').remove();
+    }
+    syncToFirebase();
+}
+
+function addEmployeeFromManage() {
+    var input = document.getElementById('addEmpInput');
+    var name = input.value.trim();
+    if (!name) return;
+    if (employees.indexOf(name) === -1) {
+        employees.push(name);
+        input.value = '';
+        renderManageLists();
+        syncToFirebase();
+    } else {
+        alert('Сотрудник "' + name + '" уже есть');
+    }
+}
+
+function addObjectFromManage() {
+    var input = document.getElementById('addObjInput');
+    var name = input.value.trim();
+    if (!name) return;
+    if (objects.indexOf(name) === -1) {
+        objects.push(name);
+        input.value = '';
+        renderManageLists();
+        syncToFirebase();
+    } else {
+        alert('Объект "' + name + '" уже есть');
+    }
+}
+
+// ===== Add Employee Modal =====
+function openAddEmployeeModal() {
+    document.getElementById('addEmpModal').classList.add('open');
+    document.getElementById('newEmpName').value = '';
+    setTimeout(function() { document.getElementById('newEmpName').focus(); }, 100);
+}
+
+function closeAddEmployeeModal() {
+    document.getElementById('addEmpModal').classList.remove('open');
+}
+
+function confirmAddEmployee() {
+    var input = document.getElementById('newEmpName');
+    var name = input.value.trim();
+    if (!name) return;
+    if (employees.indexOf(name) === -1) {
+        employees.push(name);
+        closeAddEmployeeModal();
+        renderEmployees();
+        syncToFirebase();
+    } else {
+        alert('Сотрудник "' + name + '" уже есть');
+    }
+}
+
+// ===== Add Object Modal =====
+function openAddObjectModal() {
+    document.getElementById('addObjModal').classList.add('open');
+    document.getElementById('newObjName').value = '';
+    setTimeout(function() { document.getElementById('newObjName').focus(); }, 100);
+}
+
+function closeAddObjectModal() {
+    document.getElementById('addObjModal').classList.remove('open');
+}
+
+function confirmAddObject() {
+    var input = document.getElementById('newObjName');
+    var name = input.value.trim();
+    if (!name) return;
+    if (objects.indexOf(name) === -1) {
+        objects.push(name);
+        closeAddObjectModal();
+        // Обновляем select
+        var sel = document.getElementById('objectSelect');
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+        sel.value = name;
+        if (selectedDate) {
+            if (!daysData[selectedDate.dateStr]) {
+                daysData[selectedDate.dateStr] = { object: '', employees: {} };
+            }
+            daysData[selectedDate.dateStr].object = name;
+        }
+        syncToFirebase();
+    } else {
+        alert('Объект "' + name + '" уже есть');
+    }
+}
+
 // ===== Firebase Sync =====
-function syncNotesToFirebase() {
+function syncToFirebase() {
     if (isSyncing) return;
+    var data = {
+        employees: employees,
+        objects: objects,
+        days: daysData
+    };
     try {
-        notesRef.set(notesCache);
+        dataRef.set(data);
     } catch(e) { console.warn('Firebase sync error:', e); }
 }
 
 function listenFirebase() {
     try {
-        notesRef.on('value', function(snapshot) {
+        dataRef.on('value', function(snapshot) {
             var data = snapshot.val();
             if (!data) return;
             isSyncing = true;
-            notesCache = {};
-            Object.keys(data).forEach(function(key) {
-                if (data[key]) {
-                    notesCache[key] = data[key];
-                }
-            });
-            // Перерисовываем календарь
+
+            if (data.employees && Array.isArray(data.employees)) {
+                employees = data.employees;
+            }
+            if (data.objects && Array.isArray(data.objects)) {
+                objects = data.objects;
+            }
+            if (data.days) {
+                daysData = data.days;
+            }
+
             renderCalendar();
-            // Если открыта панель заметки — обновляем
-            if (selectedDate && document.getElementById('notePanel').classList.contains('open')) {
-                openNotePanel();
+            if (document.getElementById('dayPanel').classList.contains('open')) {
+                openDayPanel();
             }
             isSyncing = false;
         });
